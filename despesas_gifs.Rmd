@@ -1,0 +1,372 @@
+---
+title: "Despesas 2008-2018"
+author: "tiago"
+date: "1 de novembro de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Despesas Governo Federal 2008-2017
+
+```{r libraries}
+library(tidyverse)
+library(readxl)
+library(scales)
+library(ggrepel)
+library(ipeaData)
+library(extrafont)
+library(gganimate)
+library(RColorBrewer)
+
+tema <- function(){
+    theme_minimal() +
+    theme(
+      text = element_text(family = "Open Sans", colour = "grey20"),
+      axis.text = element_text(family = "Open Sans", colour = "grey20", size = 16),
+      title = element_text(face = "bold"), # size para o Shiny
+      plot.subtitle = element_text(face = "plain", size = 20, color = "grey20"),
+      plot.caption = element_text(face = "italic"),
+      panel.grid.major = element_blank(), 
+      panel.grid.minor = element_blank(),
+      legend.text = element_text(size = 18),
+      legend.title = element_text(size = 18),
+      axis.ticks = element_line(size = 0.5),
+      axis.ticks.length = unit(.25, "cm"),
+      axis.title = element_text(size = 16),
+      legend.position = 'bottom')
+  }
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+data <- read_excel("despesasBrasil2008a2017v2.xlsx", skip = 9)
+# data <- read_excel("despesasBrasil2008a2017previdencia.xlsx", skip = 9)
+```
+
+PIBs do período
+
+```{r}
+pibs <- ipeadata("BM12_PIBAC12")
+pibs <- pibs[MES=="12" & ANO %in% (2008:2017)]$VALVALOR
+
+names(pibs) <- as.character(c(2008:2017))
+
+colnames(data)<- c("Categoria", names(pibs))
+
+### opcional: verificando totais
+
+# método 1:
+colSums(data[,-1])
+
+# método 2: dplyr
+data %>% summarise_at(-1, funs(soma = sum)) # poderia ser só funs(sum)
+
+# soma ok
+
+```
+
+Normalizando os valores pelos PIBs de cada ano...
+
+```{r}
+# Método antigo
+
+# for (i in 2:length(data)) {
+#   data[,i] <- data[,i] / (pibs[colnames(data[,i])]*1000000)
+# }
+
+# Método novo
+pibs_matrix <- as.matrix((pibs))
+
+# me resulta em uma matriz com uma coluna 
+# posso transpô-la e convertê-la em data.frame, com uma linha:
+
+pibs_df <- as.data.frame(t(pibs_matrix))
+
+# agora sim, vamos dividir:
+
+data_pib <- data %>%
+  mutate_at(-1, funs(. / (pibs_df$. * 1e6))) # ou seja, divida cada coluna selecionada (.) pela coluna correspondente de pibs_df (pibs_df$.). o 1e6 entra aí porque os dados do pib estão em milhões de reais.
+```
+
+Tidying os dados
+
+```{r}
+dados <- data_pib %>%
+  mutate(inicial = `2008`,
+         final = `2017`) %>%
+  gather(key = "Ano", value = "Valor", `2008`:`2017`) %>%
+  filter(!(Categoria %in% c("Amortização da Dívida", "Juros"))) %>%
+  mutate(Ano = as.integer(Ano),
+         Categoria = factor(Categoria),      
+         Categoria = fct_reorder(Categoria, Valor))
+
+```
+
+Incorporando legendas em inglês.
+
+```{r}
+# Category <- c("Personnel and Public Sector Pensions","Healthcare Costs","Education Costs","Welfare Costs","Administrative Costs","Pension Benefits (private sector)","Investments","Other Transfers to States and Municipalities")
+
+# Categoria_sem_acento <- c("Pessoal (Ativo, Inativo, Pension.)", "Custeio da Saude", "Custeio da Educacao", "Custeio Social", "Custeio Administrativo", "Beneficios Previdenciarios RGPS", "Investimentos", "Outras Transferencias a Estados e Mun.")
+
+Categoria_reduzida <- c("Pessoal", "Custeio Saúde", "Custeio Educação", "Custeio Social", "Custeio Administrativo", "Outras Transferências", "Beneficios RGPS", "Investimentos")
+
+# traducao <- data.frame(Categoria = unique(dados$Categoria), Category, Categoria_sem_acento, Categoria_reduzida)
+
+traducao <- data.frame(Categoria = unique(dados$Categoria), Categoria_reduzida)
+
+dados <- dados %>%
+  left_join(traducao, by = 'Categoria')
+  
+```
+
+
+As cores. Pego a paleta do `RColorBrewer`, converto para rgb, divido os componentes por um determinado valor (1.2, para não ficar muito escuro.) e gero uma nova paleta, 
+
+```{r}
+qde_categorias <- length(unique(dados$Categoria))
+
+paleta <- brewer.pal(qde_categorias, "Set3")
+
+paleta_rgb <- col2rgb(paleta)
+
+paleta_darker <- NULL
+
+for (i in 1:dim(paleta_rgb)[2] ) {
+  paleta_darker <- c(paleta_darker, 
+                     rgb(paleta_rgb[1,i] %/% 1.25,               
+                         paleta_rgb[2,i] %/% 1.25, 
+                         paleta_rgb[3,i] %/% 1.25, maxColorValue = 255))
+}
+```
+
+Eu gostaria de usar duas escalas de cores diferentes, então vou incorporar as cores que quero na própria tabela de dados. Primeiro criemos a tabela de cores:
+
+```{r}
+tabela_cores <- data.frame(
+  "Categoria" = unique(dados$Categoria),
+  "CoresNormais" = paleta,
+  "CoresEscuras" = paleta_darker
+)
+```
+
+Agora incorporemos as cores aos dados:
+
+```{r}
+dados_com_cores <- dados %>%
+  left_join(tabela_cores)
+```
+
+Agora no plot vou usar o `scale_fill_identity`!
+
+```{r}
+# removi as linhas e rótulos indicando 2008 / 2017
+
+# dados_plot <- dados_com_cores %>% filter(Ano == "2015")
+dados_plot <- dados_com_cores
+
+plot_estatico <- ggplot(dados_plot, aes(y = Valor, x = reorder(Categoria_reduzida, Valor))) +
+  geom_bar(aes(fill = CoresNormais), stat = 'identity') +
+  # geom_tile(aes(y = inicial, color = CoresEscuras), width = 0.9, height = 0.00001, linetype = 'dotted') +
+  # geom_tile(aes(y = final, color = CoresEscuras), width = 0.9, height = 0.00001) +
+  geom_text(aes(y = Valor + 0.005, 
+                label = percent(round(Valor, 4)), 
+                color = CoresEscuras), 
+            position = position_dodge(1),
+            size = 6, family = "Open Sans", vjust = 'center') +
+  # geom_text(aes(y = ifelse(Categoria == "Benefícios Previdenciários RGPS", inicial, NA)), 
+  #           x = qde_categorias + 0.8, 
+  #           label = min(dados_plot$Ano),
+  #           vjust = "top", hjust = "center", color = "grey50",
+  #           family = "Open Sans", size = 4.5) +
+  # geom_text(aes(y = ifelse(Categoria == "Benefícios Previdenciários RGPS", final, NA)), 
+  #           x = qde_categorias + 0.8, 
+  #           label = max(dados_plot$Ano),
+  #           vjust = "top", hjust = "center", color = "grey50", 
+  #           family = "Open Sans", size = 4.5) +
+  coord_flip() +
+  scale_y_continuous(labels = percent, expand = c(0, 0), limits = c(0,0.095)) +
+  scale_x_discrete(expand = c(0, 1.01)) +
+  scale_fill_identity() +
+  scale_color_identity() +
+  #scale_color_manual(values = paleta_darker) +
+  #scale_fill_manual(values = paleta) +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = NULL
+  ) +
+  #geom_text(aes(label = Ano), x = 1, y = 0.05, size = 5) +
+  tema() +
+  theme(legend.position = 'none') + theme(axis.ticks.y = element_blank(),
+                                          axis.ticks.x = element_blank(),
+                                          axis.text.x = element_blank())
+
+plot_estatico
+```
+
+Agora o gif!
+
+```{r}
+plot_dinamico <- plot_estatico +
+  labs(subtitle = "{frame_time}") +
+  transition_time(Ano) +
+  ease_aes('linear')
+
+# plot_dinamico
+
+animate(plot_dinamico, bg = 'transparent', nframes = 120, height = 488, width = 688)
+```
+
+Salvando o gif...
+```{r}
+anim_save("despesas2.gif", animation = last_animation())
+```
+
+Gráfico de linhas
+
+```{r}
+graf_linhas <- ggplot(dados_plot, aes(x = Ano, y = Valor, group = Categoria_reduzida, color = CoresEscuras)) +
+  geom_line(size = 1) +
+  geom_segment(aes(xend = max(dados_plot$Ano), yend = Valor, color = CoresNormais), linetype = 2) +
+  geom_point(size = 2) +
+  scale_y_continuous(labels = percent) +
+  geom_text(aes(x = max(dados_plot$Ano) + 0.1, 
+                label = paste(percent(round(Valor, 4)),
+                              Categoria_reduzida)), 
+            hjust = 0) +
+  scale_x_continuous(labels = unique(dados_plot$Ano), 
+                     breaks = unique(dados_plot$Ano),
+                     limits = c(2008, 2020)) +
+  scale_color_identity() +
+  labs(
+    y = NULL,
+    x = NULL
+  ) +
+  tema() + 
+  theme(legend.position = 'none')
+
+graf_linhas + theme(axis.text = element_text(size = 8))
+```
+
+Gif do gráfico de linhas
+
+(muitíssimo inspirado )
+
+```{r}
+gif_linhas <- graf_linhas + transition_reveal(Categoria_reduzida, Ano)
+
+animate(gif_linhas, nframes = 100, height = 480, width = 800)
+```
+
+Salvando o gif.
+
+```{r}
+anim_save("despesas_linhas.gif", animation = last_animation())
+```
+
+Em inglês...
+```{r}
+plot_english <- ggplot(dados_plot, aes(x = Ano, y = Valor, group = Category, color = CoresEscuras)) +
+  geom_line(size = 1) +
+  geom_segment(aes(xend = max(dados_plot$Ano), yend = Valor, color = CoresNormais), linetype = 2) +
+  geom_point(size = 2) +
+  scale_y_continuous(labels = percent) +
+  geom_text(aes(x = max(dados_plot$Ano) + 0.1, 
+                label = paste(percent(round(Valor, 4)),
+                              Category)), 
+            hjust = 0) +
+  scale_x_continuous(labels = unique(dados_plot$Ano), 
+                     breaks = unique(dados_plot$Ano),
+                     limits = c(2008, 2021)) +
+  scale_color_identity() +
+  labs(
+    y = NULL,
+    x = NULL,
+    title = "Expenditure of the Brazilian Federal Government as a percentage of the GDP"
+  ) +
+  tema() + 
+  theme(legend.position = 'none') + theme(title = element_text(size = 16, face = 'plain')) +
+  transition_reveal(Category, Ano) 
+
+animate(plot_english, nframes = 100, height = 480, width = 760)
+
+```
+
+Salvar....
+```{r}
+anim_save("expenditure_Brazil.gif", animation = last_animation())
+```
+
+## Slopegraph
+
+```{r}
+dados_slope <- dados_plot %>% 
+  filter(Ano %in% c(2008,2017)) %>%
+  mutate(variacao = final/inicial -1) %>%
+  select(Categoria, Categoria_reduzida, Ano, Valor, variacao) %>%
+  spread(Ano, Valor)
+
+distancia <- 3
+valor_maximo <- max(c(dados_slope$`2008`, dados_slope$`2017`))
+
+tema_slope <- function(){
+    theme_minimal() +
+    theme(
+      text = element_text(family = "Open Sans", colour = "grey20"),
+      axis.text = element_text(family = "Open Sans", colour = "grey20", size = 16),
+      title = element_text(face = "bold"), # size para o Shiny
+      plot.subtitle = element_text(face = "plain", size = 20, color = "grey20"),
+      plot.caption = element_text(face = "italic"),
+      panel.grid.major = element_blank(), 
+      panel.grid.minor = element_blank(),
+      legend.text = element_text(size = 18),
+      legend.title = element_text(size = 18),
+      axis.ticks = element_line(size = 0.5),
+      axis.ticks.length = unit(.25, "cm"),
+      axis.title = element_text(size = 16),
+      legend.position = 'none')
+  }
+
+ggplot(dados_slope) +
+  geom_segment(
+    aes(
+      x = 0,
+      xend = distancia,
+      y = `2008`,
+      yend = `2017`,
+      color = variacao), 
+    lineend = "round")+
+  geom_text(label="2008", x=0, y=(1.04*(valor_maximo)), hjust = "center", size=4.5, family = "Open Sans") +
+  geom_text(label="2017", x=distancia, y=(1.04*valor_maximo), hjust= "center", size=4.5, family = "Open Sans") +
+  geom_text(
+    aes(x = distancia,
+        y = `2017`,
+        label = paste(" ",
+                      percent(`2017`), 
+                      Categoria_reduzida,
+                      sep="   "),
+        hjust = 0,
+        family = "Open Sans"),
+    color = 'grey20',
+    size = 4) +
+  geom_point(aes(x = 0, y = `2008`, color = variacao)) +
+  geom_point(aes(x = distancia, y = `2017`, color = variacao)) +
+  scale_y_continuous(labels = percent, limits = c(0,1.1*valor_maximo))
+  xlim(0, distancia+distancia) +
+  scale_color_gradient2() +
+  scale_y_continuous()
+  labs(
+    x = NULL,
+    y = NULL
+  )
+
+```
+
