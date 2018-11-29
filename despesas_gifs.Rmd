@@ -321,52 +321,66 @@ tema_slope <- function(){
     theme_minimal() +
     theme(
       text = element_text(family = "Open Sans", colour = "grey20"),
-      axis.text = element_text(family = "Open Sans", colour = "grey20", size = 16),
-      title = element_text(face = "bold"), # size para o Shiny
+      axis.text = element_blank(),
+      # axis.ticks.y = element_line(size = 0.5),
+      axis.ticks = element_blank(),
+      axis.ticks.length = unit(.25, "cm"),
+      title = element_text(face = "bold"),
       plot.subtitle = element_text(face = "plain", size = 20, color = "grey20"),
-      plot.caption = element_text(face = "italic"),
       panel.grid.major = element_blank(), 
       panel.grid.minor = element_blank(),
-      legend.text = element_text(size = 18),
-      legend.title = element_text(size = 18),
-      axis.ticks = element_line(size = 0.5),
-      axis.ticks.length = unit(.25, "cm"),
-      axis.title = element_text(size = 16),
       legend.position = 'none')
   }
 
-ggplot(dados_slope) +
+slope_graph <- ggplot(dados_slope, aes(color = variacao < 0)) +
   geom_segment(
     aes(
       x = 0,
       xend = distancia,
       y = `2008`,
-      yend = `2017`,
-      color = variacao), 
+      yend = `2017`), 
     lineend = "round")+
-  geom_text(label="2008", x=0, y=(1.04*(valor_maximo)), hjust = "center", size=4.5, family = "Open Sans") +
-  geom_text(label="2017", x=distancia, y=(1.04*valor_maximo), hjust= "center", size=4.5, family = "Open Sans") +
+  geom_text(label="2008", x=0, y=(1.1*(valor_maximo)), hjust = "center", size=4.5, family = "Open Sans", color = 'grey20', fontface = 'bold') +
+  geom_text(label="2017", x=distancia, y=(1.1*valor_maximo), hjust= "center", size=4.5, family = "Open Sans", color = 'grey20', fontface = 'bold') +
+  geom_text(
+  aes(x = 0 - distancia * 0.2,
+      y = `2008`, # um vetor para ajustar pos
+      label = paste(percent(`2008`), 
+                    sep="   "),
+      hjust = 0,
+      family = "Open Sans"),
+  size = 4) +
   geom_text(
     aes(x = distancia,
-        y = `2017`,
+        y = `2017` * c(1, 0.9, 0.7, 1.1, 1, 1, 1, 1), # um vetor para ajustar pos
         label = paste(" ",
                       percent(`2017`), 
                       Categoria_reduzida,
                       sep="   "),
         hjust = 0,
         family = "Open Sans"),
-    color = 'grey20',
     size = 4) +
-  geom_point(aes(x = 0, y = `2008`, color = variacao)) +
-  geom_point(aes(x = distancia, y = `2017`, color = variacao)) +
-  scale_y_continuous(labels = percent, limits = c(0,1.1*valor_maximo))
-  xlim(0, distancia+distancia) +
-  scale_color_gradient2() +
-  scale_y_continuous()
+  geom_point(aes(x = 0, 
+                 y = `2008`)) +
+  geom_point(aes(x = distancia, y = `2017`)) +
+  scale_color_manual(values = c('TRUE' = '#1f476a', 'FALSE' = '#ba3917'), 
+                     guide = 'none') +
+  ylim(0, 1.1*valor_maximo) +
+  xlim(0 - distancia * 0.2, distancia+distancia) +
   labs(
     x = NULL,
     y = NULL
-  )
+  ) + tema_slope()
+
+png(filename="slope2.png", 
+    type="cairo",
+    units="in", 
+    width=6.88, 
+    height=4.88, 
+    pointsize=12, 
+    res=400)
+slope_graph
+dev.off()
 
 ```
 
