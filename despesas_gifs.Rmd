@@ -27,7 +27,7 @@ tema <- function(){
       text = element_text(family = "Open Sans", colour = "grey20"),
       axis.text = element_text(family = "Open Sans", colour = "grey20", size = 16),
       title = element_text(face = "bold"), # size para o Shiny
-      plot.subtitle = element_text(face = "plain", size = 20, color = "grey20"),
+      plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 20, color = "#1E4C7A"),
       plot.caption = element_text(face = "italic"),
       panel.grid.major = element_blank(), 
       panel.grid.minor = element_blank(),
@@ -141,9 +141,9 @@ paleta_darker <- NULL
 
 for (i in 1:dim(paleta_rgb)[2] ) {
   paleta_darker <- c(paleta_darker, 
-                     rgb(paleta_rgb[1,i] %/% 1.25,               
-                         paleta_rgb[2,i] %/% 1.25, 
-                         paleta_rgb[3,i] %/% 1.25, maxColorValue = 255))
+                     rgb(paleta_rgb[1,i] %/% 2,               
+                         paleta_rgb[2,i] %/% 2, 
+                         paleta_rgb[3,i] %/% 2, maxColorValue = 255))
 }
 ```
 
@@ -177,10 +177,10 @@ plot_estatico <- ggplot(dados_plot, aes(y = Valor, x = reorder(Categoria_reduzid
   # geom_tile(aes(y = inicial, color = CoresEscuras), width = 0.9, height = 0.00001, linetype = 'dotted') +
   # geom_tile(aes(y = final, color = CoresEscuras), width = 0.9, height = 0.00001) +
   geom_text(aes(y = Valor + 0.005, 
-                label = percent(round(Valor, 4)), 
-                color = CoresEscuras), 
+                label = percent(round(Valor, 4)),
+                color = CoresEscuras), # color = CoresEscuras
             position = position_dodge(1),
-            size = 6, family = "Open Sans", vjust = 'center') +
+            size = 6, family = "Open Sans Condensed Light", vjust = 'center') +  # color = '#1E4C7A') +
   # geom_text(aes(y = ifelse(Categoria == "Benefícios Previdenciários RGPS", inicial, NA)), 
   #           x = qde_categorias + 0.8, 
   #           label = min(dados_plot$Ano),
@@ -222,12 +222,15 @@ plot_dinamico <- plot_estatico +
 
 # plot_dinamico
 
-animate(plot_dinamico, bg = 'transparent', nframes = 120, height = 488, width = 688)
+animate(plot_dinamico, 
+        bg = 'transparent',
+        renderer = gifski_renderer(loop = FALSE),
+        nframes = 120, height = 488, width = 688)
 ```
 
 Salvando o gif...
 ```{r}
-anim_save("despesas2.gif", animation = last_animation())
+anim_save("despesas_final.gif", animation = last_animation())
 ```
 
 Gráfico de linhas
@@ -263,7 +266,8 @@ Gif do gráfico de linhas
 ```{r}
 gif_linhas <- graf_linhas + transition_reveal(Categoria_reduzida, Ano)
 
-animate(gif_linhas, nframes = 100, height = 480, width = 800)
+animate(gif_linhas, nframes = 100, height = 488, width = 688,
+        renderer = gifski_renderer(loop = FALSE))
 ```
 
 Salvando o gif.
@@ -332,7 +336,8 @@ tema_slope <- function(){
       legend.position = 'none')
   }
 
-slope_graph <- ggplot(dados_slope, aes(color = variacao < 0)) +
+slope_graph <- ggplot(dados_slope, 
+                      aes(color = Categoria_reduzida)) + # aes(color = variacao < 0)
   geom_segment(
     aes(
       x = 0,
@@ -340,11 +345,11 @@ slope_graph <- ggplot(dados_slope, aes(color = variacao < 0)) +
       y = `2008`,
       yend = `2017`), 
     lineend = "round")+
-  geom_text(label="2008", x=0, y=(1.1*(valor_maximo)), hjust = "center", size=4.5, family = "Open Sans", color = 'grey20', fontface = 'bold') +
-  geom_text(label="2017", x=distancia, y=(1.1*valor_maximo), hjust= "center", size=4.5, family = "Open Sans", color = 'grey20', fontface = 'bold') +
+  geom_text(label="2008", x=0, y=(1.1*(valor_maximo)), hjust = "center", size=4.5, family = "Open Sans Condensed", color = "#1E4C7A", fontface = 'plain') +
+  geom_text(label="2017", x=distancia, y=(1.1*valor_maximo), hjust= "center", size=4.5, family = "Open Sans Condensed", color = "#1E4C7A", fontface = 'plain') +
   geom_text(
-  aes(x = 0 - distancia * 0.2,
-      y = `2008`, # um vetor para ajustar pos
+  aes(x = 0 - distancia * 0.15,
+      y = `2008` * c(1, 0.9, 1, 1, 1.05, 1, 1, 1),
       label = paste(percent(`2008`), 
                     sep="   "),
       hjust = 0,
@@ -352,21 +357,21 @@ slope_graph <- ggplot(dados_slope, aes(color = variacao < 0)) +
   size = 4) +
   geom_text(
     aes(x = distancia,
-        y = `2017` * c(1, 0.9, 0.7, 1.1, 1, 1, 1, 1), # um vetor para ajustar pos
+        y = `2017` * c(1, 1, 0.8, 1.2, 1.1, 1, 1, 1), # um vetor para ajustar pos
         label = paste(" ",
                       percent(`2017`), 
                       Categoria_reduzida,
-                      sep="   "),
+                      sep=" "),
         hjust = 0,
         family = "Open Sans"),
     size = 4) +
   geom_point(aes(x = 0, 
                  y = `2008`)) +
   geom_point(aes(x = distancia, y = `2017`)) +
-  scale_color_manual(values = c('TRUE' = '#1f476a', 'FALSE' = '#ba3917'), 
-                     guide = 'none') +
-  ylim(0, 1.1*valor_maximo) +
-  xlim(0 - distancia * 0.2, distancia+distancia) +
+  #scale_color_manual(values = c('TRUE' = '#1f476a', 'FALSE' = '#ba3917'), guide = 'none') +
+  scale_color_manual(values = paleta_darker, guide = 'none') +
+  ylim(0.002, 1.1*valor_maximo) +
+  xlim(0 - distancia * 0.15, distancia * 1.55) +
   labs(
     x = NULL,
     y = NULL
@@ -374,7 +379,8 @@ slope_graph <- ggplot(dados_slope, aes(color = variacao < 0)) +
 
 png(filename="slope2.png", 
     type="cairo",
-    units="in", 
+    units="in",
+    bg = NA,
     width=6.88, 
     height=4.88, 
     pointsize=12, 

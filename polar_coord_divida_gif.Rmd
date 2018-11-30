@@ -1,5 +1,5 @@
 ---
-title: "Resgates da Dívida"
+title: "Resgates da D?vida"
 author: "tiago"
 date: "1 de novembro de 2018"
 output: html_document
@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Resgates da dívida pública desde 2007
+## Resgates da d?vida p?blica desde 2007
 
 Pacotes e temas.
 
@@ -30,7 +30,7 @@ tema <- function(){
       text = element_text(family = "Open Sans", colour = "grey20"),
       axis.text = element_text(family = "Open Sans", colour = "grey20", size = 15),
       title = element_text(face = "bold"), # size para o Shiny
-      plot.subtitle = element_text(face = "plain", size = 20, color = "grey20"),
+      plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 20, color = "#1E4C7A"),
       plot.caption = element_text(face = "italic"),
       panel.grid.minor = element_blank(),
       legend.text = element_text(size = 18),
@@ -45,7 +45,7 @@ tema <- function(){
 
 ## Leitura dos dados
 
-Importação do Ckan.
+Importa??o do Ckan.
 
 ```{r pressure, echo=FALSE}
 
@@ -68,10 +68,10 @@ resgates <- tabela %>%
   filter(Ano > 2006) # (5)
 
 # (1) to filtrando pela primeira coluna.
-# (2) to excluindo essa coluna, pq não me interessa
-# (3) a tabela original possui colunas para os totais dos anos. quando uso o "separate", ele não encontra o "/" e gera um NA para o "Ano". Aqui estou removendo essas linhas.
-# (4) para o "Ano" ficar com 4 dígitos e em formato numérico.
-# (5) porque em 2006 só existem dados para novembro e dezembro.
+# (2) to excluindo essa coluna, pq n?o me interessa
+# (3) a tabela original possui colunas para os totais dos anos. quando uso o "separate", ele n?o encontra o "/" e gera um NA para o "Ano". Aqui estou removendo essas linhas.
+# (4) para o "Ano" ficar com 4 d?gitos e em formato num?rico.
+# (5) porque em 2006 s? existem dados para novembro e dezembro.
 ```
 
 Visualizando
@@ -100,7 +100,7 @@ plot1 <- ggplot(dados_plot_cor, aes(x = Mes, y = Valor, color = -Valor)) +
   coord_polar(theta = "x", start = 0, direction = 1) +
   scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
   labs(
-    y = "Bilhões de R$",
+    y = "Bilh?es de R$",
     x = NULL
   ) +
   tema() +
@@ -144,7 +144,7 @@ plot1 <- ggplot(dados_plot_cor, aes(x = Mes, y = Valor, fill = -Valor)) +
   coord_polar(theta = "x", start = 0, direction = 1) +
   scale_y_continuous(limits = c(-50000, NA), labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
   labs(
-    y = "Bilhões de R$",
+    y = "Bilh?es de R$",
     x = NULL
   ) +
   tema() +
@@ -198,13 +198,13 @@ teste <- magick::image_append(c(divida_gif[1],divida_gif[2]))
 
 Legal e tal, mas eu queria que as barras fossem segmentadas por cor, como num equalizador. Vou precisar fragmentar os valores em categorias, e depois fazer uma barra empilhada. Vamos ver no que vai dar.
 
-O ideal seriam oito categorias, já que as paletas de gradiente do `RColorBrewer` têm 8 cores. Queria que a escala do eixo y tivesse os mesmos breaks da escala de cor.
+O ideal seriam oito categorias, j? que as paletas de gradiente do `RColorBrewer` t?m 8 cores. Queria que a escala do eixo y tivesse os mesmos breaks da escala de cor.
 
 ```{r}
 summary(resgates$Valor)
 ```
 
-O máximo por enquanto é 161 bilhões. Vou considerar uma escala de 0 a 200 bi então, com 8 níveis de 25 bi de tamanho.
+O m?ximo por enquanto ? 161 bilh?es. Vou considerar uma escala de 0 a 200 bi ent?o, com 8 n?veis de 25 bi de tamanho.
 
 ```{r}
 maximo = 175000
@@ -213,7 +213,7 @@ intervalo = maximo / qde_cores
 
 # uma rotininha para fragmentar os valores em colunas correspondendo aos intervalos de valores. 
 
-resgates_frag <- resgates # criando uma cópia 
+resgates_frag <- resgates # criando uma c?pia 
 niveis_faixas <- NULL
 
 for (i in 1:qde_cores) {
@@ -227,13 +227,30 @@ for (i in 1:qde_cores) {
   niveis_faixas <- c(niveis_faixas, nome_coluna) # (3)
 }
 
-# (1) dou nome às novas variáveis...
-# (2) aqui faço a fragmentação, preenchendo as colunas adequadas.
+# (1) dou nome ?s novas vari?veis...
+# (2) aqui fa?o a fragmenta??o, preenchendo as colunas adequadas.
 # (3) fazendo um vetor de niveis para a coluna faixa
 
 resgates_frag <- resgates_frag %>%
   gather(contains("Faixa"), key = "Faixa", value = "Valor_faixa") %>%
   mutate(Faixa = factor(Faixa, levels = rev(niveis_faixas)))
+
+# cores
+
+paleta <- rev(brewer.pal(8, "YlOrRd")[2:8])
+
+paleta_rgb <- col2rgb(paleta)
+
+paleta_darker <- NULL
+
+fator <- 1.25
+
+for (i in 1:dim(paleta_rgb)[2] ) {
+  paleta_darker <- c(paleta_darker, 
+                     rgb(paleta_rgb[1,i] %/% fator,               
+                         paleta_rgb[2,i] %/% fator, 
+                         paleta_rgb[3,i] %/% fator, maxColorValue = 255))
+}
 
 ```
 
@@ -243,26 +260,33 @@ dados_plot_frag <- resgates_frag
 
 plot_equalizador <- ggplot(dados_plot_frag, aes(x = Mes, y = Valor_faixa, fill = Faixa)) +
   geom_col(width = 0.4, color = 'white') +
-  # geom_text(aes(label = format(round(Valor/1000,0), 
-  #                              big.mark = ".", 
-  #                              decimal.mark = ","),
-  #               y = Valor + 15000,
-  #               colour = Valor), 
-  #           size = 6, family = "Open Sans") +
+  geom_text(aes(label = ifelse(Ano == 2018, 
+                               format(round(Valor/1000,0), 
+                                      big.mark = ".", 
+                                      decimal.mark = ","),
+                               NA),
+                y = Valor + 15000,
+                color = Valor),
+            size = 5.5, fontface = 'plain', 
+            family = "Open Sans Condensed Light") +
   scale_y_continuous(limits = c(-50000, NA), breaks = (0:7)*intervalo, 
                      labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
-  scale_fill_manual(values = rev(brewer.pal(8, "YlOrRd")[2:8])) +
-  scale_colour_gradientn(colours = brewer.pal(8, "YlOrRd")[2:8]) +
+  #scale_fill_manual(values = rev(brewer.pal(8, "YlOrRd")[2:8])) +
+  #scale_colour_gradientn(colours = brewer.pal(8, "YlOrRd")[2:8]) +
   #coord_polar(theta = "x", start = 0, direction = 1) +
+  scale_fill_manual(values = paleta_darker) +
+  scale_color_gradientn(colors = rev(paleta_darker)) +
   labs(
-    y = "Bilhões de R$",
+    y = "BilhÃµes de R$",
     x = NULL
   ) +
   tema() +
   theme(legend.position = 'none',
-        panel.grid.major.y = element_line(color = "grey90", linetype = "dotted"),
-        panel.grid.major.x = element_line(color = "grey90", linetype = "solid"),
-        axis.title.y = element_text(hjust = 0.85))
+        panel.grid.major.y = element_line(color = "white", linetype = "dotted"),
+        panel.grid.major.x = element_line(color = "white", linetype = "solid"),
+        axis.title.y = element_text(hjust = 0.90, 
+                                    family = "Open Sans Condensed",
+                                    color = "#1E4C7A"))
 
 # plot_equalizador
 
@@ -278,8 +302,10 @@ plot_din_frag <- plot_eq_polar + # + theme(panel.grid.major.x = element_blank())
   labs(subtitle = "{closest_state}") +
   transition_states(Ano, 1, 4, wrap = FALSE)
 
-animate(plot_din_frag + ease_aes('linear'), bg = 'transparent', height = 488, width = 688)
+animate(plot_din_frag + ease_aes('linear'), 
+        bg = 'transparent', height = 488, width = 688, 
+        renderer = gifski_renderer(loop = FALSE))
 
-# anim_save("divida_equalizador2.gif", animation = last_animation())
+# anim_save("divida_polar.gif", animation = last_animation())
 
 ```
