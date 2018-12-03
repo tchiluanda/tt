@@ -230,7 +230,7 @@ animate(plot_dinamico,
 
 Salvando o gif...
 ```{r}
-anim_save("despesas_final.gif", animation = last_animation())
+anim_save("despesas_final_loop.gif", animation = last_animation())
 ```
 
 Gráfico de linhas
@@ -244,7 +244,7 @@ graf_linhas <- ggplot(dados_plot, aes(x = Ano, y = Valor, group = Categoria_redu
   geom_text(aes(x = max(dados_plot$Ano) + 0.1, 
                 label = paste(percent(round(Valor, 4)),
                               Categoria_reduzida)), 
-            hjust = 0) +
+            hjust = 0, family = "Open Sans") +
   scale_x_continuous(labels = unique(dados_plot$Ano), 
                      breaks = unique(dados_plot$Ano),
                      limits = c(2008, 2020)) +
@@ -256,7 +256,7 @@ graf_linhas <- ggplot(dados_plot, aes(x = Ano, y = Valor, group = Categoria_redu
   tema() + 
   theme(legend.position = 'none')
 
-graf_linhas + theme(axis.text = element_text(size = 8))
+graf_linhas + theme(axis.text = element_text(size = 10, family = "Open Sans"))
 ```
 
 Gif do gráfico de linhas
@@ -264,7 +264,9 @@ Gif do gráfico de linhas
 (muitíssimo inspirado )
 
 ```{r}
-gif_linhas <- graf_linhas + transition_reveal(Categoria_reduzida, Ano)
+gif_linhas <- graf_linhas + 
+  theme(axis.text = element_text(size = 10, family = "Open Sans")) +
+  transition_reveal(Categoria_reduzida, Ano)
 
 animate(gif_linhas, nframes = 100, height = 488, width = 688,
         renderer = gifski_renderer(loop = FALSE))
@@ -273,7 +275,7 @@ animate(gif_linhas, nframes = 100, height = 488, width = 688,
 Salvando o gif.
 
 ```{r}
-anim_save("despesas_linhas.gif", animation = last_animation())
+anim_save("despesas_linhas_loop.gif", animation = last_animation())
 ```
 
 Em inglês...
