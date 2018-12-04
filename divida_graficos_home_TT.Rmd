@@ -63,7 +63,7 @@ resgates <- tabela %>%
   gather(key = Mes_Ano, value = Valor) %>%
   separate(Mes_Ano, into = c("Mes", "Ano"), sep = "/") %>%
   filter(!is.na(Ano)) %>% # (3)
-  mutate(Ano = as.integer(paste0('20',Ano)), # (4)
+  mutate(Ano = as.integer(paste0('20', Ano)), # (4)
          Mes = factor(Mes, levels = c("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"))) %>%
   filter(Ano > 2006) # (5)
 

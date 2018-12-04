@@ -1,0 +1,125 @@
+---
+title: "Resultado Primario"
+author: "tiago"
+date: "4 de dezembro de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries}
+library(tidyverse)
+library(readxl)
+library(scales)
+library(ggrepel)
+library(ipeaData)
+library(extrafont)
+library(gganimate)
+library(RColorBrewer)
+library(ckanr)
+library(zoo)
+
+tema <- function(){
+    theme_minimal() +
+    theme(
+      text = element_text(family = "Open Sans", colour = "grey20"),
+      axis.text = element_text(family = "Open Sans", colour = "grey20", size = 16),
+      title = element_text(face = "bold"), # size para o Shiny
+      plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 20, color = "#1E4C7A"),
+      plot.caption = element_text(face = "italic"),
+      panel.grid.major = element_blank(), 
+      panel.grid.minor = element_blank(),
+      legend.text = element_text(size = 18),
+      legend.title = element_text(size = 18),
+      axis.ticks = element_line(size = 0.5),
+      axis.ticks.length = unit(.25, "cm"),
+      axis.title = element_text(size = 16),
+      legend.position = 'bottom')
+  }
+
+```
+
+
+## Resultado primário
+
+```{r importa, echo=FALSE}
+# recurso_TT <- resource_show(id="527ccdb1-3059-42f3-bf23-b5e3ab4c6dc6",
+#                             url="https://apickan.tesouro.gov.br/ckan")
+# download.file(recurso_TT$url, destfile = "./rtn.xlsx", mode = 'wb' )
+tabela <- read_excel("rtn.xlsx", sheet = "1.1-A", skip = 4)
+```
+
+## Tratando os dados
+
+```{r}
+
+meses <- c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
+
+serie <- tabela %>% 
+  rename(rotulos = 1) %>%
+  filter(str_detect(rotulos, "IX. RESULTADO PRIMÁRIO")) %>%
+  select(-1) %>%
+  gather(key = "Periodo", value = "Valor") %>%
+  mutate(Valor = as.numeric(Valor),
+         Periodo = as.Date(as.numeric(Periodo), origin = "1899-12-30"),
+         Ano = lubridate::year(Periodo),
+         Mes = lubridate::month(Periodo),
+         Valor_12m = zoo::rollapply(Valor, width = 12, FUN = sum, fill = NA, align = 'right'),
+         Resultado = ifelse(Valor_12m > 0, "Positivo", "Negativo"),
+         Data = paste0(Ano, " - ", meses[Mes])) %>%
+  filter(!is.na(Valor_12m))
+
+
+```
+
+Para poder fazer um gráfico de area, preciso segmentar o gráfico em grupo contíguos. Ou seja, agrupar as sequencias de negativos e positivos.
+
+```{r}
+
+```
+
+Plotando
+
+```{r}
+vermelho <- brewer.pal(3, 'Set1')[1]
+azul     <- brewer.pal(3, 'Set1')[2]
+
+grafico_linha <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = as.factor(Resultado), group = 1)) +
+  geom_hline(yintercept = 0, color = 'white', size = 1) +
+  geom_line(size = 1) + 
+  scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
+  scale_x_date(date_breaks = "2 years", 
+               date_labels = "%Y", 
+               limits = c(as.Date("1997-12-01"), NA),
+               expand = expand_scale(mult = c(0, .04))) +
+  coord_cartesian(clip = 'off') + 
+  labs(x = NULL, y = NULL) +
+  geom_text(aes(x = Periodo + 200,
+                label = format(round(Valor_12m/1000,0), 
+                                      big.mark = ".", 
+                                      decimal.mark = ",")),
+            size = 6, fontface = 'plain', family = "Open Sans SemiBold") +
+  tema() +   
+  theme(legend.position = 'none',
+        panel.grid.major.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.background = element_rect(fill = "#f0f5f7", linetype = "blank"))
+
+```
+
+```{r}
+gif_linhas <- grafico_linha +
+  labs(subtitle = "{frame_along}") + #puro chute!
+  transition_reveal(1, Periodo) 
+
+animate(gif_linhas, nframes = 300, height = 488, width = 688,
+        renderer = gifski_renderer(loop = FALSE))
+
+anim_save("rtn_sem_loop.gif", animation = last_animation())
+```
+
