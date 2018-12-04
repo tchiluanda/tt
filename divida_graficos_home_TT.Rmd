@@ -260,14 +260,12 @@ dados_plot_frag <- resgates_frag
 
 plot_equalizador <- ggplot(dados_plot_frag, aes(x = Mes, y = Valor_faixa, fill = Faixa)) +
   geom_col(width = 0.4, color = 'white') +
-  geom_text(aes(label = ifelse(Ano == 2018, 
-                               format(round(Valor/1000,0), 
+  geom_text(aes(label = format(round(Valor/1000,0), 
                                       big.mark = ".", 
                                       decimal.mark = ","),
-                               NA),
-                y = Valor + 15000,
+                y = Valor + 20000,
                 color = Valor),
-            size = 5.5, fontface = 'plain', 
+            size = 6, fontface = 'plain', 
             family = "Open Sans") +
   scale_y_continuous(limits = c(-50000, NA), breaks = (0:7)*intervalo, 
                      labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
@@ -282,11 +280,12 @@ plot_equalizador <- ggplot(dados_plot_frag, aes(x = Mes, y = Valor_faixa, fill =
   ) +
   tema() +
   theme(legend.position = 'none',
-        panel.grid.major.y = element_line(color = "white", linetype = "dotted"),
-        panel.grid.major.x = element_line(color = "white", linetype = "solid"),
-        axis.title.y = element_text(hjust = 0.90, 
-                                    family = "Open Sans Condensed",
-                                    color = "#1E4C7A"))
+        panel.grid.major.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.background = element_rect(fill = "#f0f5f7", linetype = "blank"))
 
 # plot_equalizador
 
@@ -303,9 +302,10 @@ plot_din_frag <- plot_eq_polar + # + theme(panel.grid.major.x = element_blank())
   transition_states(Ano, 1, 4, wrap = FALSE)
 
 animate(plot_din_frag + ease_aes('linear'), 
-        bg = 'transparent', height = 488, width = 688, 
+        fps = 2.5,
+        height = 488, width = 688, 
         renderer = gifski_renderer(loop = FALSE))
 
-# anim_save("divida_polar.gif", animation = last_animation())
+# anim_save("divida_polar_sem_loop.gif", animation = last_animation())
 
 ```
