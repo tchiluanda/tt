@@ -77,7 +77,22 @@ serie <- tabela %>%
 Para poder fazer um gráfico de area, preciso segmentar o gráfico em grupo contíguos. Ou seja, agrupar as sequencias de negativos e positivos.
 
 ```{r}
+palavra_chave <- "Grupo_"
+i <- 1
+ultimo_grupo <- paste0("Grupo_", i)
+grupo <- c(ultimo_grupo)
 
+vetor <- serie$Resultado
+
+for (j in 2:length(vetor)) {
+  if (vetor[j] != vetor[j-1]) {
+    i <- i+1
+    ultimo_grupo <- paste0("Grupo_", i)
+  }
+  grupo <- c(grupo, ultimo_grupo)
+}
+
+serie$Grupos <- grupo
 ```
 
 Plotando
@@ -86,10 +101,12 @@ Plotando
 vermelho <- brewer.pal(3, 'Set1')[1]
 azul     <- brewer.pal(3, 'Set1')[2]
 
-grafico_linha <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = as.factor(Resultado), group = 1)) +
+grafico_linha <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = Resultado, group = 1)) +
   geom_hline(yintercept = 0, color = 'white', size = 1) +
+  geom_area(aes(group = Grupos)) +
   geom_line(size = 1) + 
   scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
+  scale_fill_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +  
   scale_x_date(date_breaks = "2 years", 
                date_labels = "%Y", 
                limits = c(as.Date("1997-12-01"), NA),
