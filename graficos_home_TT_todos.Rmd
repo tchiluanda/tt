@@ -327,16 +327,17 @@ Plot
 ```{r}
 graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca, group = classificador, color = classificador)) +
   geom_line(size = 1) +
-  geom_segment(aes(xend = max(dados_desp_plot$Periodo), yend = Valor), linetype = 2) +
+  geom_segment(aes(xend = max(dados_desp_plot$Periodo), yend = Valor_12m_ipca), linetype = 2) +
   geom_point(size = 2) +
   geom_text(aes(x = max(dados_desp_plot$Periodo) + 0.2,
-                label = paste(round(Valor, 0),
+                label = paste(round(Valor_12m_ipca, 0),
                               classificador)), 
             hjust = 0, family = "Open Sans",
             size = 7.5) + #não tinha definido
   scale_x_date(date_breaks = "1 years", 
                date_labels = "%Y",
-               expand = expand_scale(mult = c(0, .20))) +
+               expand = expand_scale(mult = c(0, .60)),
+               limits = c(NA, max(dados_desp_plot$Periodo))) +
   labs(
     y = NULL,
     x = NULL
@@ -347,7 +348,15 @@ graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca,
                     axis.text.y = element_blank(),
                     axis.ticks.y = element_blank(),
                     axis.title.y = element_blank(),
-                    plot.background = element_rect(fill = "#f0f5f7", 
-                                                   linetype = "blank"))
+                    plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2))
+```
+
+```{r}
+gif_linhas_desp <- graf_linhas_desp +
+  transition_reveal(classificador, Periodo) 
+# + theme(axis.text = element_text(size = 10, family = "Open Sans")) 
+
+animate(gif_linhas_desp, nframes = nrow(dpf), height = 488, width = 688,
+        renderer = gifski_renderer(loop = FALSE))
 ```
 
