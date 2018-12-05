@@ -230,10 +230,124 @@ gif_linhas_dpf <- grafico_linha_dpf +
   transition_reveal(1, Periodo) 
 #  labs(subtitle = "{frame_along}") 
 
-animate(gif_linhas_dpf, nframes = nrow(dpf), height = 488, width = 688,
+animate(gif_linhas_dpf, nframes = nrow(dpf), height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
 
 
 anim_save("dpf_sem_loop_v2.gif", animation = last_animation())
+```
+
+## Despesas União
+
+```{r tg_para_csv}
+dados_desp_RGPS <- read_excel("./dados/despesas2008_2018_apenasRGPS.xlsx", skip = 9)
+dados_desp_nRGPS <- read_excel("./dados/despesas2008_2018_excetoRGPS.xlsx", skip = 9)
+
+dados_desp_nRGPS$RGPS <- FALSE
+dados_desp_RGPS$RGPS  <- TRUE
+
+dados_desp <- rbind(dados_desp_nRGPS, dados_desp_RGPS)
+
+colnames(dados_desp) <- c("Funcao_cod",
+                          "Funcao_nome",
+                          "GND_cod",
+                          "GND_nome",
+                          "Modalidade_cod",
+                          "Modalidade_nome",
+                          "Periodo_Siafi",
+                          "Ano",
+                          "Mes_num",
+                          "Valor",
+                          "Previdencia")
+
+dados_desp <- dados_desp %>%
+  filter(!(Mes_num %in% c("13", "14"))) %>%
+  mutate(Periodo = as.Date(paste0(Ano, "-",
+                                  if_else(Mes_num < 10, "0", ""), Mes_num, "-",
+                                  "01")),
+         Valor = round(Valor, 2)) %>%
+  filter(!(Funcao_cod %in% c("-7","-9")) & 
+     !(GND_cod %in% c("-7","-9")) &
+     !(Modalidade_cod %in% c("-7","-9")))
+
+dados_desp %>% 
+  write.csv2("./dados/despUniao.csv", row.names = FALSE)
+
+
+```
+
+Verifica totais
+
+```{r}
+dados_desp %>%
+  group_by(Ano) %>%
+  summarise(total = sum(Valor))
+```
+
+
+Tratamento dos dados
+
+```{r}
+
+dados_desp_plot <- dados_desp %>%
+  mutate(classificador = case_when(
+    Previdencia == TRUE ~ "Benefícios RGPS",
+    GND_cod == "1" ~ "Pessoal",
+    GND_cod %in% c("4", "5") ~ "Investimentos",
+    GND_cod %in% c("2", "6") ~ "Dívida",
+    GND_cod == "3" & Funcao_cod == "10" ~ "Custeio Saúde",
+    GND_cod == "3" & Funcao_cod == "12" ~ "Custeio Educação",
+    GND_cod == "3" & Funcao_cod %in% c("08", "11") ~ "Custeio Social",
+    GND_cod == "3" & as.numeric(Modalidade_cod) %in% 30:49 ~ "Outras Transferências",
+    GND_cod == "3" ~ "Custeio Administrativo")) %>%
+  group_by(Periodo, classificador) %>%
+  summarise(Valor = sum(Valor)) %>%
+  ungroup() %>%
+  spread(classificador, Valor) %>%
+  mutate_at(-1, funs(zoo::rollapply(., width = 12, FUN = sum, fill = NA, align = 'right'))) %>% 
+  gather(-1, key = "classificador", value = "Valor_12m") %>%
+  left_join(ipca) %>%
+  mutate(Valor_12m_ipca = Valor_12m * IPCA / 1e9) %>%
+  filter(!is.na(Valor_12m_ipca)) %>%
+  filter(!classificador %in% c("Dívida", "Outras Transferências"))
+```
+
+Verifica total
+
+```{r}
+dados_desp_plot %>%
+  filter(Mes_num == "12") %>%
+  group_by(Ano) %>%
+  summarize(Valor = sum(Valor_12m))
+
+```
+
+Plot
+
+```{r}
+graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca, group = classificador, color = classificador)) +
+  geom_line(size = 1) +
+  geom_segment(aes(xend = max(dados_desp_plot$Periodo), yend = Valor), linetype = 2) +
+  geom_point(size = 2) +
+  geom_text(aes(x = max(dados_desp_plot$Periodo) + 0.2,
+                label = paste(round(Valor, 0),
+                              classificador)), 
+            hjust = 0, family = "Open Sans",
+            size = 7.5) + #não tinha definido
+  scale_x_date(date_breaks = "1 years", 
+               date_labels = "%Y",
+               expand = expand_scale(mult = c(0, .20))) +
+  labs(
+    y = NULL,
+    x = NULL
+  ) +
+  tema() + 
+  theme(legend.position = 'none') +
+  theme(axis.text = element_text(size = 12, family = "Open Sans"), # era 10
+                    axis.text.y = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    axis.title.y = element_blank(),
+                    plot.background = element_rect(fill = "#f0f5f7", 
+                                                   linetype = "blank"))
 ```
 
