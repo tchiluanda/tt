@@ -156,9 +156,9 @@ anim_save("rtn_sem_loop_v2.gif", animation = last_animation())
 ## Dados do estoque da dívida
 
 ```{r}
-recurso_dpf_TT <- resource_show(id="0402cb77-5e4c-4414-966f-0e87d802a29a",
-                             url="https://apickan.tesouro.gov.br/ckan")
-download.file(recurso_dpf_TT$url, destfile = "./dpf.xlsx", mode = 'wb' )
+# recurso_dpf_TT <- resource_show(id="0402cb77-5e4c-4414-966f-0e87d802a29a",
+#                              url="https://apickan.tesouro.gov.br/ckan")
+# download.file(recurso_dpf_TT$url, destfile = "./dpf.xlsx", mode = 'wb' )
 tabela_div <- read_excel("dpf.xlsx", skip = 4)
 ```
 
@@ -349,6 +349,7 @@ graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca,
                labels = anos,
                #date_labels = "%Y",
                expand = expand_scale(mult = c(0, .67))) +
+  scale_color_manual(values = brewer.pal(8, "Dark2")[-6]) +
   coord_cartesian(clip = 'off') +
   labs(
     y = NULL,
