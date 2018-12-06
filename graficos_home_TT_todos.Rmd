@@ -309,7 +309,9 @@ dados_desp_plot <- dados_desp %>%
   left_join(ipca) %>%
   mutate(Valor_12m_ipca = Valor_12m * IPCA / 1e9) %>%
   filter(!is.na(Valor_12m_ipca)) %>%
-  filter(!classificador %in% c("Dívida", "Outras Transferências"))
+  filter(!classificador %in% c("Dívida", "Outras Transferências")) %>%
+  arrange(Periodo)
+
 ```
 
 Verifica total
@@ -325,19 +327,29 @@ dados_desp_plot %>%
 Plot
 
 ```{r}
+
+janeiros <- unique(dados_desp_plot$Periodo[str_detect(dados_desp_plot$Periodo, "-01-01")])
+anos <- lubridate::year(janeiros)
+ultimo_periodo <- max(dados_desp_plot$Periodo)
+# dados_desp_plot$posicoes_finais_rotulos <- c(rep(0, nrow(dados_desp_plot) - 7), c(0, 20, 0, -20, 20, 0, 0)) + dados_desp_plot$Valor_12m_ipca
+
 graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca, group = classificador, color = classificador)) +
   geom_line(size = 1) +
-  geom_segment(aes(xend = max(dados_desp_plot$Periodo), yend = Valor_12m_ipca), linetype = 2) +
+  geom_segment(aes(xend = ultimo_periodo, yend = Valor_12m_ipca), linetype = 2) +
   geom_point(size = 2) +
-  geom_text(aes(x = max(dados_desp_plot$Periodo) + 0.2,
-                label = paste(round(Valor_12m_ipca, 0),
-                              classificador)), 
+  geom_text(aes(x = max(dados_desp_plot$Periodo) + 50,
+                label = paste(round(Valor_12m_ipca, 0), classificador),
+                y = ifelse(Periodo < ultimo_periodo,
+                           Valor_12m_ipca,
+                           Valor_12m_ipca + c(0, 15, 0, -23, 20, -10, 0))), 
             hjust = 0, family = "Open Sans",
             size = 7.5) + #não tinha definido
-  scale_x_date(date_breaks = "1 years", 
-               date_labels = "%Y",
-               expand = expand_scale(mult = c(0, .60)),
-               limits = c(NA, max(dados_desp_plot$Periodo))) +
+  scale_x_date(breaks = janeiros,
+              #date_breaks = "1 years", 
+               labels = anos,
+               #date_labels = "%Y",
+               expand = expand_scale(mult = c(0, .67))) +
+  coord_cartesian(clip = 'off') +
   labs(
     y = NULL,
     x = NULL
@@ -349,14 +361,18 @@ graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca,
                     axis.ticks.y = element_blank(),
                     axis.title.y = element_blank(),
                     plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2))
+
+# aqui tinha um problema. com o expand tão grande, a escala continuava até sei lá quanto (2025, acho). para resolver isso tentei usar o `limits`. Não resolveu. aí resolvi setar mais ou menos manualmente, bom breaks e labels no lugar de date_breaks e date_labels. Mas eu tinha deixado o limits, então o geom_text não estava sendo escrito, pq ficou fora do limite.
+
+# outro problema: o vetor de posições não estava funcionando pq a tibble estava ordenada por classificador, e não por período.
 ```
 
 ```{r}
 gif_linhas_desp <- graf_linhas_desp +
   transition_reveal(classificador, Periodo) 
 # + theme(axis.text = element_text(size = 10, family = "Open Sans")) 
-
-animate(gif_linhas_desp, nframes = nrow(dpf), height = 488, width = 688,
+# 
+animate(gif_linhas_desp, nframes = nrow(dpf), height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
 ```
 
