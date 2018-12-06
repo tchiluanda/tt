@@ -324,6 +324,25 @@ dados_desp_plot %>%
 
 ```
 
+Bixiga de enconding
+
+
+```{r}
+Encoding(dados_desp_plot$classificador) <- "UTF-8"
+
+dput(unique(dados_desp_plot$classificador))
+
+classificador_sem_acento <- c("Previdencia (RGPS)", "Custeio Administ.", "Custeio Educacao", 
+"Custeio Saude", "Custeio Social", "Investimentos", "Pessoal"
+)
+
+tab_class <- data.frame("classificador" = unique(dados_desp_plot$classificador), classificador_sem_acento)
+
+dados_desp_plot <- dados_desp_plot %>%
+  left_join(tab_class)
+
+```
+
 Plot
 
 ```{r}
@@ -338,17 +357,17 @@ graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca,
   geom_segment(aes(xend = ultimo_periodo, yend = Valor_12m_ipca), linetype = 2) +
   geom_point(size = 2) +
   geom_text(aes(x = max(dados_desp_plot$Periodo) + 50,
-                label = paste(round(Valor_12m_ipca, 0), classificador),
+                label = paste(round(Valor_12m_ipca, 0), classificador_sem_acento),
                 y = ifelse(Periodo < ultimo_periodo,
                            Valor_12m_ipca,
-                           Valor_12m_ipca + c(0, 15, 0, -23, 20, -10, 0))), 
+                           Valor_12m_ipca + c(0, 19, 0, -23, 20, -7, 0))), 
             hjust = 0, family = "Open Sans",
-            size = 7.5) + #não tinha definido
+            size = 8) + #não tinha definido
   scale_x_date(breaks = janeiros,
               #date_breaks = "1 years", 
                labels = anos,
                #date_labels = "%Y",
-               expand = expand_scale(mult = c(0, .67))) +
+               expand = expand_scale(mult = c(0, .60))) +
   scale_color_manual(values = brewer.pal(8, "Dark2")[-6]) +
   coord_cartesian(clip = 'off') +
   labs(
@@ -357,7 +376,7 @@ graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca,
   ) +
   tema() + 
   theme(legend.position = 'none') +
-  theme(axis.text = element_text(size = 12, family = "Open Sans"), # era 10
+  theme(axis.text = element_text(size = 16, family = "Open Sans"), # era 10
                     axis.text.y = element_blank(),
                     axis.ticks.y = element_blank(),
                     axis.title.y = element_blank(),
@@ -375,5 +394,9 @@ gif_linhas_desp <- graf_linhas_desp +
 # 
 animate(gif_linhas_desp, nframes = nrow(dpf), height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
+```
+
+```{r}
+anim_save("desp_sem_loop_v2.gif", animation = last_animation())
 ```
 
