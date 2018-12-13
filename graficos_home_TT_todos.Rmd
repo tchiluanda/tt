@@ -198,15 +198,24 @@ dpf <- dpf %>%
 
 ```{r}
 grafico_linha_dpf <- ggplot(dpf, aes(x = Periodo, y = Valor_ipca, color = TRUE, group = 1)) +
-  geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
+  geom_area(fill = "#6cb2d2", color = NA) +
   geom_line(size = 1) + 
+  #geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
   geom_point(size = 3, shape = 21, fill = "#f0f5f7") +
   scale_color_manual(values = c("TRUE" = "#1E4C7A")) +
   scale_x_date(date_breaks = "1 years", 
                date_labels = "%Y", 
                limits = c(as.Date("2006-01-01"), NA),
                expand = expand_scale(mult = c(.04, .04))) +
-  coord_cartesian(clip = 'off') + 
+  coord_cartesian(ylim = c(min(dpf$Valor_ipca), max(dpf$Valor_ipca)),
+                  clip = "on") + # ponto e valor iniciais fixos a seguit
+  geom_point(size = 3, shape = 21, fill = "#f0f5f7",
+             x = dpf$Periodo[1], y = dpf$Valor_ipca[1]) +
+  geom_text(x = dpf$Periodo[1] - 100, y = dpf$Valor_ipca[1] + 50,
+            label = format(round(dpf$Valor_ipca[1]/1000, 2), 
+                                      big.mark = ".", 
+                                      decimal.mark = ","),
+            size = 7, fontface = 'plain', family = "Open Sans SemiBold") + # fim vlrs iniciais
   labs(x = NULL, y = NULL) +
   geom_text(aes(x = Periodo + 200,
                 label = format(round(Valor_ipca/1000, 2), 
@@ -221,6 +230,10 @@ grafico_linha_dpf <- ggplot(dpf, aes(x = Periodo, y = Valor_ipca, color = TRUE, 
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2))
+
+# observações: se vc setar o ylim(), a área deixa de aparecer. para mantê-la, é preciso setar o ylim como parâmetro do coord_cartesian(). Da documentação (https://ggplot2.tidyverse.org/reference/lims.html):
+
+# "For changing x or y axis limits without dropping data observations, see coord_cartesian()."
 ```
 
 Animando
@@ -234,7 +247,7 @@ animate(gif_linhas_dpf, nframes = nrow(dpf)/2, height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
 
 
-anim_save("home_TT_dpf.gif", animation = last_animation())
+anim_save("home_TT_dpf_escala.gif", animation = last_animation())
 ```
 
 ## Despesas União
