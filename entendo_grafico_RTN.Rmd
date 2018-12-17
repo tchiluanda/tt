@@ -1,0 +1,266 @@
+---
+title: "Entendendo o gráfico - Resultado primário"
+date: "4 de dezembro de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{css}
+* {
+  font-family: "Open Sans";
+}
+
+h1, h2, h3, h4 {
+  color: #1E4C7A;
+}
+```
+
+O gráfico acima demonstra a evolução do "Resultado Primário do Governo Central", uma das principais informações fiscais apuradas e divulgada pelo Teosuro Nacional. Os valores representam, para cada mês, a soma dos resultados mensais, atualizados por um índice de inflação, o IPCA, dos últimos 12 meses. Os resultados positivos são indicados pela cor **<span style="color: #1E4C7A">azul</span>**; os negativos, pela cor **<span style="color: #E41A1C">vermelha</span>**. 
+
+Aqui tentaremos demonstrar como o gráfico foi construído e que fatores influenciam no seu comportamento.
+
+```{r libraries}
+library(tidyverse)
+library(readxl)
+library(scales)
+library(ggrepel)
+library(ipeaData)
+library(extrafont)
+library(gganimate)
+library(RColorBrewer)
+library(ckanr)
+library(zoo)
+
+tema <- function(){
+    theme_minimal() +
+    theme(
+      text = element_text(family = "Open Sans", colour = "grey20"),
+      axis.text = element_text(family = "Open Sans", colour = "grey20", size = 10),
+      title = element_text(face = "bold"), # size para o Shiny
+      plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 16, color = "#1E4C7A"),
+      plot.caption = element_text(face = "italic"),
+      panel.grid.major = element_blank(), 
+      panel.grid.minor = element_blank(),
+      legend.text = element_text(size = 14),
+      legend.title = element_text(size = 14),
+      axis.ticks = element_line(size = 0.5),
+      axis.ticks.length = unit(.25, "cm"),
+      axis.title = element_text(size = 8),
+      legend.position = 'none')
+}
+
+tema_gif <- function() {
+  theme(legend.position = 'none',
+        panel.grid.major.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2))
+}
+
+
+```
+
+## Os dados
+
+Os dados utilizados estão disponíveis [aqui mesmo no Tesouro Transparente](http://www.tesourotransparente.gov.br/ckan/dataset/resultado-do-tesouro-nacional), na forma de [Dados Abertos](http://www.tesourotransparente.gov.br/sobre/dados-abertos). Mensalmente o Tesouro Nacional apura o Resultado Primário e atualiza as planilhas disponíveis no link acima. A série completa apresenta dados desde janeiro de 1997.
+
+```{r importa, echo=FALSE}
+# recurso_TT <- resource_show(id="527ccdb1-3059-42f3-bf23-b5e3ab4c6dc6",
+#                             url="https://apickan.tesouro.gov.br/ckan")
+# download.file(recurso_TT$url, destfile = "./rtn.xlsx", mode = 'wb' )
+tabela <- read_excel("rtn.xlsx", sheet = "1.1-A", skip = 4)
+```
+
+![Índice das séries históricas do Resultado do Tesouro Nacional](indice_RTN.PNG)
+
+Como indicado na figura, vamos utilizar a planilha "1.1-A - Resultado Primário do Governo Central - Mensal - Valores reais (IPCA)", que já apresenta os valores históricos atualizados pelos índices de inflação do IPCA.
+
+```{r}
+
+meses <- c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
+
+serie <- tabela %>% 
+  rename(rotulos = 1) %>%
+  filter(str_detect(rotulos, "VI. PRIMÁRIO GOVERNO") |
+           str_detect(rotulos, "Deflator - IPCA")) %>%
+  mutate(rotulos = c("Valor", "IPCA")) %>%
+  gather(-1, key = "Periodo", value = "Valores") %>%
+  spread(key = rotulos, value = Valores) %>%
+  mutate(Valor = as.numeric(Valor),
+         IPCA = as.numeric(IPCA),
+         Periodo = as.Date(as.numeric(Periodo), origin = "1899-12-30"),
+         Ano = lubridate::year(Periodo),
+         Mes = lubridate::month(Periodo),
+         Valor_12m = zoo::rollapply(Valor, width = 12, FUN = sum, fill = NA, align = 'right'),
+         Resultado = ifelse(Valor_12m > 0, "Positivo", "Negativo"),
+         Data = paste0(Ano, " - ", meses[Mes])) %>%
+  filter(!is.na(Valor_12m))
+  # filter(Periodo >= "2006-01-01") # para ficar igual à série da dívida
+
+
+# Para poder fazer um gráfico de area, precisamos segmentar o gráfico/série em grupo contíguos. Ou seja, agrupar as sequencias de negativos e positivos.
+
+palavra_chave <- "Grupo_"
+i <- 1
+ultimo_grupo <- paste0("Grupo_", i)
+grupo <- c(ultimo_grupo)
+
+vetor <- serie$Resultado
+
+for (j in 2:length(vetor)) {
+  if (vetor[j] != vetor[j-1]) {
+    i <- i+1
+    ultimo_grupo <- paste0("Grupo_", i)
+  }
+  grupo <- c(grupo, ultimo_grupo)
+}
+
+serie$Grupos <- grupo
+```
+
+No gráfico apresentado na página inicial do Tesouro Transparente, apresentamos o Resultado Primário a partir de 2006, para o período coincidir com o período do gráfico da Dívida Pública Federal. Vamos, no entanto, visualizar a série inteira. Destacamos a região a partir de novembro de 2014, mês em que se observou pela primeira vez um déficit primário em 12 meses.
+
+```{r, fig.width=9}
+vermelho <- brewer.pal(3, name = "Set1")[1]
+azul <- "#1f476a" # brewer.pal(3, name = "Set1")[2]
+verde <- brewer.pal(3, name = "Set1")[3]
+
+vermelho_claro <- "#ee7576"
+azul_claro     <- "#2c90bf" # "#87b1d4"
+primeiro_mes_negativo <- subset(serie, serie$Resultado == "Negativo")$Periodo[1]
+
+plot_rtn <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = Resultado, group = 1)) +
+  annotate("rect", xmin = primeiro_mes_negativo, xmax = max(serie$Periodo) + 100, 
+           ymin = -Inf, ymax = Inf, fill = "#F0F5F7") +
+  annotate("text", x = primeiro_mes_negativo, y = -Inf, label = "11/2014", hjust = "center", 
+           vjust = "bottom", size = 2.5, fontface = 'plain', family = "Open Sans", color = "grey10") +
+  geom_area(aes(group = Grupos)) +
+  geom_line(size = 1) + 
+  geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
+  geom_point(aes(y = ifelse(Periodo == primeiro_mes_negativo, Valor_12m, NA)),
+             size = 3, shape = 21) +
+  scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
+  scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
+  scale_x_date(date_breaks = "2 years", 
+               date_labels = "%Y") +
+  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
+  coord_cartesian(clip = 'on') + 
+  labs(x = NULL, y = "R$ bilhões") +
+  tema() + theme(axis.title.y = element_text(hjust = 1))
+
+plot_rtn
+
+# opção com barra em cima dos tick marks indicando o período negativo e o período positivo
+# plot_rtn <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = Resultado, group = 1)) +
+#   geom_area(aes(group = Grupos)) +
+#   geom_line(size = 1) + 
+#   geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
+#   scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
+#   scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
+#   scale_x_date(date_breaks = "2 years", 
+#                date_labels = "%Y") +
+#   scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
+#   coord_cartesian(clip = 'off') + 
+#   geom_rect(xmin = min(serie$Periodo), xmax = primeiro_mes_negativo, 
+#             ymin = min(serie$Valor_12m)-29e3, ymax = min(serie$Valor_12m)-20e3,
+#             color = NA, fill = azul_claro) +
+#   geom_rect(xmin = primeiro_mes_negativo, xmax = max(serie$Periodo), 
+#             ymin = min(serie$Valor_12m)-29e3, ymax = min(serie$Valor_12m)-20e3,
+#             color = NA, fill = vermelho_claro) +
+#   labs(x = NULL, y = "R$ bilhões") +
+#   tema() + theme(axis.title.y = element_text(hjust = 1))
+
+
+```
+
+```{r}
+png(filename="teste.png", 
+    type="cairo",
+    units="in", 
+    width=9.5, 
+    height=6, 
+    pointsize=12, 
+    res=400)
+plot_rtn
+dev.off()
+```
+
+### As receitas
+
+```{r}
+linha_RecTotal <- which(tabela$Discriminação == "I. RECEITA TOTAL")
+linha_Transf <- which(tabela$Discriminação == "II. TRANSF. POR REPARTIÇÃO DE RECEITA")
+
+rec <- tabela %>% 
+  rename(rotulos = 1) %>%
+  filter(row_number() >= linha_RecTotal & row_number() <= linha_Transf - 1) %>%
+  gather(-1, key = "Periodo", value = "Valores") %>%
+  spread(key = rotulos, value = Valores) %>%
+  mutate_at(-1, funs(zoo::rollapply(as.numeric(.), width = 12, FUN = sum, fill = NA, align = 'right'))) %>%
+  mutate(Periodo = as.Date(as.numeric(Periodo), origin = "1899-12-30"),
+         Ano = lubridate::year(Periodo),
+         Mes = lubridate::month(Periodo)) %>%
+  gather(-1, key = "rubrica", value = "Valor_12m") %>%
+  filter(!is.na(Valor_12m))
+
+ggplot(rec%>%filter(str_detect(rubrica, "I.1.")), aes(x = Periodo, y = Valor_12m, color = rubrica)) +
+  geom_line()
+```
+
+
+
+
+
+Vamos marcar o primeiro valor negativo
+
+```{r}
+grafico_linha <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = Resultado, group = 1)) +
+  geom_area(aes(group = Grupos)) +
+  geom_line(size = 1) + 
+  geom_point(size = 3, shape = 21, fill = "#f0f5f7") +
+  geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
+  scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
+  scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
+  scale_x_date(date_breaks = "1 years", 
+               date_labels = "%Y", 
+               limits = c(as.Date("2006-01-01"), NA), #"1997-12-01"
+               expand = expand_scale(mult = c(.04, .04))) +
+  coord_cartesian(clip = 'off') + 
+  labs(x = NULL, y = NULL) +
+  geom_text(aes(x = Periodo + 200,
+                label = format(round(Valor_12m/1000,0), 
+                                      big.mark = ".", 
+                                      decimal.mark = ",")),
+            size = 7, fontface = 'plain', family = "Open Sans SemiBold") +
+  tema()
+```
+
+```{r}
+
+```
+
+
+diminuir width!
+
+```{r}
+gif_linhas <- grafico_linha +
+  transition_reveal(1, Periodo) 
+#  labs(subtitle = "{frame_along}") 
+
+animate(gif_linhas, nframes = nrow(serie)/2, height = 488, width = 668,
+        renderer = gifski_renderer(loop = FALSE))
+
+
+anim_save("hom_TT_rtn.gif", animation = last_animation())
+
+```
+
