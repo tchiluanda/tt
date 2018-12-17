@@ -194,26 +194,82 @@ plot_rtn
 dev.off()
 ```
 
+O resultado nada mais é do que o confronto entre Receitas e Despesas:
+
 ### As receitas
 
 ```{r}
-linha_RecTotal <- which(tabela$Discriminação == "I. RECEITA TOTAL")
-linha_Transf <- which(tabela$Discriminação == "II. TRANSF. POR REPARTIÇÃO DE RECEITA")
-
-rec <- tabela %>% 
+pipe_da_tabela <- function(dados) {
+  dados %>% 
   rename(rotulos = 1) %>%
-  filter(row_number() >= linha_RecTotal & row_number() <= linha_Transf - 1) %>%
   gather(-1, key = "Periodo", value = "Valores") %>%
   spread(key = rotulos, value = Valores) %>%
   mutate_at(-1, funs(zoo::rollapply(as.numeric(.), width = 12, FUN = sum, fill = NA, align = 'right'))) %>%
-  mutate(Periodo = as.Date(as.numeric(Periodo), origin = "1899-12-30"),
-         Ano = lubridate::year(Periodo),
-         Mes = lubridate::month(Periodo)) %>%
+  mutate(Periodo = as.Date(as.numeric(Periodo), origin = "1899-12-30")) %>%
   gather(-1, key = "rubrica", value = "Valor_12m") %>%
   filter(!is.na(Valor_12m))
+}
+
+linha_RecTotal <- which(tabela$Discriminação == "I. RECEITA TOTAL")
+linha_Transf <- which(tabela$Discriminação == "II. TRANSF. POR REPARTIÇÃO DE RECEITA")
+linha_DespTotal <- which(tabela$Discriminação == "IV. DESPESA TOTAL")
+linha_FSB <- which(tabela$Discriminação == "V. FUNDO SOBERANO DO BRASIL")
+
+rec_desp <- pipe_da_tabela(tabela %>% rename(rotulos = 1) %>%
+                             filter(str_detect(rotulos, "RECEITA LÍQUIDA") | 
+                                    str_detect(rotulos, "DESPESA TOTAL")) %>%
+                             mutate(rotulos = c("Receita", "Despesa")))
+
+rec <- pipe_da_tabela(tabela %>% 
+                        filter(row_number() >= linha_RecTotal & row_number() <= linha_Transf - 1))
+
+desp <- pipe_da_tabela(tabela %>% 
+                        filter(row_number() >= linha_DespTotal & row_number() <= linha_FSB - 1))
+
+# rec <- tabela %>% 
+#   rename(rotulos = 1) %>%
+#   filter(row_number() >= linha_RecTotal & row_number() <= linha_Transf - 1) %>%
+#   gather(-1, key = "Periodo", value = "Valores") %>%
+#   spread(key = rotulos, value = Valores) %>%
+#   mutate_at(-1, funs(zoo::rollapply(as.numeric(.), width = 12, FUN = sum, fill = NA, align = 'right'))) %>%
+#   mutate(Periodo = as.Date(as.numeric(Periodo), origin = "1899-12-30"),
+#          Ano = lubridate::year(Periodo),
+#          Mes = lubridate::month(Periodo)) %>%
+#   gather(-1, key = "rubrica", value = "Valor_12m") %>%
+#   filter(!is.na(Valor_12m))
 
 ggplot(rec%>%filter(str_detect(rubrica, "I.1.")), aes(x = Periodo, y = Valor_12m, color = rubrica)) +
   geom_line()
+```
+
+Receitas - despesas
+
+```{r}
+
+# Como os grupos coincidem temporalmente, vou trazer, pela data, a coluna de Resultado do df serie.
+
+rec_desp_plot <- serie %>%
+  select(Periodo, Resultado, Grupos) %>%
+  right_join(rec_desp)
+
+ggplot(rec_desp_plot, aes(x = Periodo, y = Valor_12m, color = rubrica, fill = Resultado, group = 1)) +
+  annotate("rect", xmin = primeiro_mes_negativo, xmax = max(serie$Periodo) + 100, 
+           ymin = -Inf, ymax = Inf, fill = "#F0F5F7") +
+  annotate("text", x = primeiro_mes_negativo, y = -Inf, label = "11/2014", hjust = "center", 
+           vjust = "bottom", size = 2.5, fontface = 'plain', family = "Open Sans", color = "grey10") +
+  geom_line(size = 1) + 
+  geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
+  geom_point(aes(y = ifelse(Periodo == primeiro_mes_negativo, Valor_12m, NA)),
+             size = 3, shape = 21) +
+  scale_color_manual(values = c("Despesa" = vermelho, "Receita" = azul)) +
+  scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
+  scale_x_date(date_breaks = "2 years", 
+               date_labels = "%Y") +
+  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
+  coord_cartesian(clip = 'on') + 
+  labs(x = NULL, y = "R$ bilhões") +
+  tema() + theme(axis.title.y = element_text(hjust = 1))
+
 ```
 
 
