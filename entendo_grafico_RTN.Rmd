@@ -31,7 +31,7 @@ library(tidyverse)
 library(readxl)
 library(scales)
 library(ggrepel)
-library(ipeaData)
+#library(ipeaData)
 library(extrafont)
 library(gganimate)
 library(RColorBrewer)
@@ -238,8 +238,6 @@ desp <- pipe_da_tabela(tabela %>%
 #   gather(-1, key = "rubrica", value = "Valor_12m") %>%
 #   filter(!is.na(Valor_12m))
 
-ggplot(rec%>%filter(str_detect(rubrica, "I.1.")), aes(x = Periodo, y = Valor_12m, color = rubrica)) +
-  geom_line()
 ```
 
 Receitas - despesas
@@ -248,21 +246,22 @@ Receitas - despesas
 
 # Como os grupos coincidem temporalmente, vou trazer, pela data, a coluna de Resultado do df serie.
 
-rec_desp_plot <- serie %>%
-  select(Periodo, Resultado, Grupos) %>%
-  right_join(rec_desp)
+rec_desp_plot <- rec_desp %>%
+  spread(rubrica, Valor_12m) %>%
+  mutate(resultado = Receita > Despesa,
+         y_min = ifelse(resultado, Receita, Despesa),
+         y_max = ifelse(!resultado, Receita, Despesa))
 
-ggplot(rec_desp_plot, aes(x = Periodo, y = Valor_12m, color = rubrica, fill = Resultado, group = 1)) +
+```
+
+```{r, fig.width=9}
+plot_rec_desp <- ggplot(rec_desp_plot, aes(x = Periodo)) +
   annotate("rect", xmin = primeiro_mes_negativo, xmax = max(serie$Periodo) + 100, 
-           ymin = -Inf, ymax = Inf, fill = "#F0F5F7") +
-  annotate("text", x = primeiro_mes_negativo, y = -Inf, label = "11/2014", hjust = "center", 
-           vjust = "bottom", size = 2.5, fontface = 'plain', family = "Open Sans", color = "grey10") +
-  geom_line(size = 1) + 
+           ymin = 0, ymax = Inf, fill = "#F0F5F7") +
+  geom_line(aes(y = Receita), color = azul, size = 1.5) + 
+  geom_line(aes(y = Despesa), color = vermelho, size = 1.5) + 
   geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
-  geom_point(aes(y = ifelse(Periodo == primeiro_mes_negativo, Valor_12m, NA)),
-             size = 3, shape = 21) +
-  scale_color_manual(values = c("Despesa" = vermelho, "Receita" = azul)) +
-  scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
+  scale_fill_manual(values = c("FALSE" = vermelho_claro, "TRUE" = azul_claro)) +  
   scale_x_date(date_breaks = "2 years", 
                date_labels = "%Y") +
   scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
@@ -270,9 +269,43 @@ ggplot(rec_desp_plot, aes(x = Periodo, y = Valor_12m, color = rubrica, fill = Re
   labs(x = NULL, y = "R$ bilhões") +
   tema() + theme(axis.title.y = element_text(hjust = 1))
 
+plot_rec_desp
+plot_rec_desp + geom_ribbon(aes(ymin = y_min, ymax = y_max, fill = resultado),
+                            alpha = 0.5, color = NA)
+
 ```
 
 
+## Receitas
+
+```{r}
+ggplot(rec%>%filter(str_detect(rubrica, "-")), aes(x = Periodo, y = Valor_12m, fill = rubrica)) +
+  geom_area(color = "white") + 
+  scale_fill_brewer(palette = "Blues", direction = -1) + tema() 
+```
+
+##despesas
+
+```{r}
+despesas <- c("IV. DESPESA TOTAL", "IV.1  Benefícios Previdenciários", "IV.2  Pessoal e Encargos Sociais", "IV.3  Outras Despesas Obrigatórias", "IV.4  Despesas Discricionárias - Todos os Poderes")
+
+despesas_simplificada <- data.frame("rubrica" = despesas, "rubrica_simples" = c("Total", "Benefícios RGPS", "Pessoal", "Outras obrigatórias", "Discricionárias"))
+
+desp_plot <- desp %>%
+  filter(rubrica %in% despesas) %>%
+  left_join(despesas_simplificada) %>%
+  filter(rubrica_simples != "Total")
+
+ggplot(desp_plot, aes(y = verifica, x = Periodo)) + geom_line() + geom_line(aes(y = Total)) + geom_line(aes(y = Total - verifica))
+```
+
+```{r}
+ggplot(desp_plot, aes(x = Periodo, y = Valor_12m, fill = rubrica_simples)) +
+  geom_area(color = "white") + 
+  geom_text(aes(label = ifelse(Periodo == max(Periodo), as.character(rubrica_simples), NA)), size = 2, position = position_stack(vjust = .5)) +
+  scale_x_date(expand = expand_scale(mult = c(0, .25))) +
+  scale_fill_brewer(palette = "Reds", direction = -1) + tema() 
+```
 
 
 
