@@ -210,10 +210,10 @@ pipe_da_tabela <- function(dados) {
   filter(!is.na(Valor_12m))
 }
 
-linha_RecTotal <- which(tabela$Discriminação == "I. RECEITA TOTAL")
-linha_Transf <- which(tabela$Discriminação == "II. TRANSF. POR REPARTIÇÃO DE RECEITA")
-linha_DespTotal <- which(tabela$Discriminação == "IV. DESPESA TOTAL")
-linha_FSB <- which(tabela$Discriminação == "V. FUNDO SOBERANO DO BRASIL")
+linha_RecTotal <- which(tabela$`Discriminação` == "I. RECEITA TOTAL")
+linha_Transf <- which(tabela$`Discriminação` == "II. TRANSF. POR REPARTIÇÃO DE RECEITA")
+linha_DespTotal <- which(tabela$`Discriminação` == "IV. DESPESA TOTAL")
+linha_FSB <- which(tabela$`Discriminação` == "V. FUNDO SOBERANO DO BRASIL")
 
 rec_desp <- pipe_da_tabela(tabela %>% rename(rotulos = 1) %>%
                              filter(str_detect(rotulos, "RECEITA LÍQUIDA") | 
@@ -278,10 +278,27 @@ plot_rec_desp + geom_ribbon(aes(ymin = y_min, ymax = y_max, fill = resultado),
 
 ## Receitas
 
-```{r}
-ggplot(rec%>%filter(str_detect(rubrica, "-")), aes(x = Periodo, y = Valor_12m, fill = rubrica)) +
-  geom_area(color = "white") + 
-  scale_fill_brewer(palette = "Blues", direction = -1) + tema() 
+```{r, fig.width=9}
+receitas <- c("I.1 -  Receita Administrada pela RFB", "I.2 -  Incentivos Fiscais", 
+"I.3 -  Arrecadação Líquida para o RGPS", "I.4 -  Receitas Não Administradas pela RFB"
+)
+
+receitas_simplificada <- data.frame("rubrica" = receitas, "rubrica_simples" = c("Receita administradas pela RFB", "Incentivos Fiscais", "Arrecadação líquida RGPS", "Receitas não administradas pela RFB"))
+
+rec_plot <- rec%>%filter(str_detect(rubrica, "-")) %>%
+  left_join(receitas_simplificada)
+
+
+ggplot(rec_plot, aes(x = Periodo, y = Valor_12m, fill = rubrica)) +
+  geom_area(color = "white", size = 1) + 
+  geom_text(aes(label = ifelse(Periodo == max(Periodo), as.character(rubrica_simples), NA)), size = 3, position = position_stack(vjust = 0.5), hjust = "right", family = "Open Sans") +
+  scale_fill_brewer(palette = "Blues", direction = -1) + 
+  scale_x_date(date_breaks = "2 years", 
+               date_labels = "%Y") +
+  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
+  coord_cartesian(clip = 'on') + 
+  labs(x = NULL, y = "R$ bilhões") +
+  tema() + theme(axis.title.y = element_text(hjust = 1))
 ```
 
 ##despesas
@@ -295,18 +312,38 @@ desp_plot <- desp %>%
   filter(rubrica %in% despesas) %>%
   left_join(despesas_simplificada) %>%
   filter(rubrica_simples != "Total")
-
-ggplot(desp_plot, aes(y = verifica, x = Periodo)) + geom_line() + geom_line(aes(y = Total)) + geom_line(aes(y = Total - verifica))
 ```
+
+```{r, fig.width = 9}
+ggplot(desp_plot, aes(x = Periodo, y = Valor_12m, fill = rubrica_simples)) +
+  geom_area(color = "white", size = 1) + 
+  geom_text(aes(label = ifelse(Periodo == max(Periodo), as.character(rubrica_simples), NA)), size = 3, position = position_stack(vjust = 0.5), hjust = "right", family = "Open Sans") +
+  scale_fill_brewer(palette = "Reds", direction = -1) +
+  scale_x_date(date_breaks = "2 years", 
+               date_labels = "%Y") +
+  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
+  coord_cartesian(clip = 'on') + 
+  labs(x = NULL, y = "R$ bilhões") +
+  tema() + theme(axis.title.y = element_text(hjust = 1))
+```
+
 
 ```{r}
-ggplot(desp_plot, aes(x = Periodo, y = Valor_12m, fill = rubrica_simples)) +
-  geom_area(color = "white") + 
-  geom_text(aes(label = ifelse(Periodo == max(Periodo), as.character(rubrica_simples), NA)), size = 2, position = position_stack(vjust = .5)) +
-  scale_x_date(expand = expand_scale(mult = c(0, .25))) +
-  scale_fill_brewer(palette = "Reds", direction = -1) + tema() 
+library(streamgraph)
+
+rec_plot %>% streamgraph(rubrica, Valor_12m, Periodo) %>%
+  sg_axis_x(2, "year", "%Y") %>%
+  sg_fill_manual(brewer.pal(8, "Blues")[5:8])
+#  sg_fill_brewer("Blues")
+
 ```
 
+```{r, fig.width=9}
+desp_plot %>% streamgraph(rubrica, Valor_12m, Periodo) %>%
+  sg_axis_x(2, "year", "%Y") %>%
+  sg_fill_brewer("Reds")
+
+```
 
 
 Vamos marcar o primeiro valor negativo
@@ -319,17 +356,17 @@ grafico_linha <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado
   geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
   scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
   scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
+  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
   scale_x_date(date_breaks = "1 years", 
                date_labels = "%Y", 
-               limits = c(as.Date("2006-01-01"), NA), #"1997-12-01"
-               expand = expand_scale(mult = c(.04, .04))) +
+               limits = c(min(serie$Periodo), NA)) +
   coord_cartesian(clip = 'off') + 
-  labs(x = NULL, y = NULL) +
+  labs(x = NULL, y = "R$ bilhões") +
   geom_text(aes(x = Periodo + 200,
                 label = format(round(Valor_12m/1000,0), 
                                       big.mark = ".", 
                                       decimal.mark = ",")),
-            size = 7, fontface = 'plain', family = "Open Sans SemiBold") +
+            size = 6, fontface = 'plain', family = "Open Sans SemiBold") +
   tema()
 ```
 
@@ -345,11 +382,10 @@ gif_linhas <- grafico_linha +
   transition_reveal(1, Periodo) 
 #  labs(subtitle = "{frame_along}") 
 
-animate(gif_linhas, nframes = nrow(serie)/2, height = 488, width = 668,
-        renderer = gifski_renderer(loop = FALSE))
+animate(gif_linhas, nframes = round(nrow(serie)/1.5, 0), height = 480, width = 800)
 
 
-anim_save("hom_TT_rtn.gif", animation = last_animation())
+#anim_save("historia_graf_rtn.gif", animation = last_animation())
 
 ```
 
