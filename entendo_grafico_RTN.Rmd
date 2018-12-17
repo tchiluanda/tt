@@ -1,7 +1,7 @@
 ---
-title: "Entendendo o gráfico - Resultado primário"
-date: "4 de dezembro de 2018"
-output: html_document
+output: 
+   html_document:
+     code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -12,7 +12,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{css}
+```{css, echo=FALSE}
 * {
   font-family: "Open Sans";
 }
@@ -22,9 +22,12 @@ h1, h2, h3, h4 {
 }
 ```
 
-O gráfico acima demonstra a evolução do "Resultado Primário do Governo Central", uma das principais informações fiscais apuradas e divulgada pelo Teosuro Nacional. Os valores representam, para cada mês, a soma dos resultados mensais, atualizados por um índice de inflação, o IPCA, dos últimos 12 meses. Os resultados positivos são indicados pela cor **<span style="color: #1E4C7A">azul</span>**; os negativos, pela cor **<span style="color: #E41A1C">vermelha</span>**. 
+![home_TT_rtn.gif]
 
-Aqui tentaremos demonstrar como o gráfico foi construído e que fatores influenciam no seu comportamento.
+O gráfico acima demonstra a evolução do "Resultado Primário do Governo Central", uma das principais informações fiscais apuradas e divulgada pelo Teosuro Nacional. 
+Os valores representam, para cada mês, a soma dos resultados mensais, atualizados por um índice de inflação, o IPCA, dos últimos 12 meses. Os resultados positivos são indicados pela cor **<span style="color: #1E4C7A">azul</span>**; os negativos, pela cor **<span style="color: #E41A1C">vermelha</span>**. 
+
+Aqui tentaremos demonstrar de forma rápida como o gráfico foi construído e indicar onde é possível obter informações adicionais.
 
 ```{r libraries}
 library(tidyverse)
@@ -42,9 +45,9 @@ tema <- function(){
     theme_minimal() +
     theme(
       text = element_text(family = "Open Sans", colour = "grey20"),
+      title = element_text(face = "bold", size = 14, color = "#1E4C7A"), 
+      plot.subtitle = element_text(family = "Open Sans Condensed", color = "grey20", face = "plain", size = 12),
       axis.text = element_text(family = "Open Sans", colour = "grey20", size = 10),
-      title = element_text(face = "bold"), # size para o Shiny
-      plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 16, color = "#1E4C7A"),
       plot.caption = element_text(face = "italic"),
       panel.grid.major = element_blank(), 
       panel.grid.minor = element_blank(),
@@ -52,7 +55,7 @@ tema <- function(){
       legend.title = element_text(size = 14),
       axis.ticks = element_line(size = 0.5),
       axis.ticks.length = unit(.25, "cm"),
-      axis.title = element_text(size = 8),
+      axis.title = element_text(size = 8, colour = "grey20"),
       legend.position = 'none')
 }
 
@@ -71,7 +74,9 @@ tema_gif <- function() {
 
 ## Os dados
 
-Os dados utilizados estão disponíveis [aqui mesmo no Tesouro Transparente](http://www.tesourotransparente.gov.br/ckan/dataset/resultado-do-tesouro-nacional), na forma de [Dados Abertos](http://www.tesourotransparente.gov.br/sobre/dados-abertos). Mensalmente o Tesouro Nacional apura o Resultado Primário e atualiza as planilhas disponíveis no link acima. A série completa apresenta dados desde janeiro de 1997.
+Os dados utilizados estão disponíveis [aqui mesmo no Tesouro Transparente](http://www.tesourotransparente.gov.br/ckan/dataset/resultado-do-tesouro-nacional), na forma de [Dados Abertos](http://www.tesourotransparente.gov.br/sobre/dados-abertos). 
+
+Mensalmente o Tesouro Nacional faz a divulgação do [Resultado do Tesouro Nacional (RTN)](http://www.tesouro.gov.br/web/stn/resultado-do-tesouro-nacional) e atualiza as planilhas disponíveis no link acima. A série completa apresenta dados desde janeiro de 1997.
 
 ```{r importa, echo=FALSE}
 # recurso_TT <- resource_show(id="527ccdb1-3059-42f3-bf23-b5e3ab4c6dc6",
@@ -80,7 +85,7 @@ Os dados utilizados estão disponíveis [aqui mesmo no Tesouro Transparente](htt
 tabela <- read_excel("rtn.xlsx", sheet = "1.1-A", skip = 4)
 ```
 
-![Índice das séries históricas do Resultado do Tesouro Nacional](indice_RTN.PNG)
+![](indice_RTN.PNG)
 
 Como indicado na figura, vamos utilizar a planilha "1.1-A - Resultado Primário do Governo Central - Mensal - Valores reais (IPCA)", que já apresenta os valores históricos atualizados pelos índices de inflação do IPCA.
 
@@ -127,7 +132,9 @@ for (j in 2:length(vetor)) {
 serie$Grupos <- grupo
 ```
 
-No gráfico apresentado na página inicial do Tesouro Transparente, apresentamos o Resultado Primário a partir de 2006, para o período coincidir com o período do gráfico da Dívida Pública Federal. Vamos, no entanto, visualizar a série inteira. Destacamos a região a partir de novembro de 2014, mês em que se observou pela primeira vez um déficit primário em 12 meses.
+No gráfico apresentado na página inicial do Tesouro Transparente, apresentamos o Resultado Primário a partir de 2006, para que o período coincidisse com o período do gráfico da Dívida Pública Federal. Aqui, no entanto, vamos visualizar a série inteira. 
+
+Destacamos a região a partir de novembro de 2014, mês em que se observou pela primeira vez um déficit primário em 12 meses.
 
 ```{r, fig.width=9}
 vermelho <- brewer.pal(3, name = "Set1")[1]
@@ -154,7 +161,9 @@ plot_rtn <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fil
                date_labels = "%Y") +
   scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
   coord_cartesian(clip = 'on') + 
-  labs(x = NULL, y = "R$ bilhões") +
+  labs(x = NULL, y = "R$ bilhões",
+       title = "Resultado Primário do Governo Central",
+       subtitle = "Soma dos últimos 12 meses, atualizados pelo IPCA") +
   tema() + theme(axis.title.y = element_text(hjust = 1))
 
 plot_rtn
@@ -194,9 +203,11 @@ plot_rtn
 dev.off()
 ```
 
-O resultado nada mais é do que o confronto entre Receitas e Despesas:
+O resultado primário corresponde à diferença entre Receitas e Despesas. Quando as receitas superam as despesas, temos um _superávit primário_. Era o que ocorria até novembro de 2014, como a figura indica. A partir desse mês, o Governo Central passou a incorrer em _déficit primário_ no acumulado em 12 meses. 
 
-### As receitas
+Para deixar essa relação mais clara, vamos visualizar o comportamento das receitas e das despesas.
+
+## As receitas e as despesas primárias
 
 ```{r}
 pipe_da_tabela <- function(dados) {
@@ -240,7 +251,13 @@ desp <- pipe_da_tabela(tabela %>%
 
 ```
 
-Receitas - despesas
+Neste documento, mostraremos apenas um panorama geral da composição e do comportamento das receitas e despesas primárias.
+
+As tabelas do RTN demonstram a composição das receitas e despesas primárias nas suas diversas rubricas. Mensalmente, na divulgação do RTN, o Tesouro publica o Relatório e a Apresentação do RTN. Esses documentos buscam evidenciar e analisar as principais alterações nos componentes das Receitas e Despesas primárias ocorridas no mês de referência.
+
+Aqui no Tesouro Transparente, a história ["Ressignificando o Resultado do Tesouro Nacional"](http://www3.tesourotransparente.gov.br/historias/ressignificando-o-resultado-do-tesouro-nacional) permite explorar de forma visual e interativa toda a série histórica e todas as rubricas que compõem o RTN, além de contextualizar os dados apresentados por meio da exibição dos próprios relatórios mensais de todo o período (desde 1997!) a partir de um simples clique.
+
+
 
 ```{r}
 
@@ -327,25 +344,6 @@ ggplot(desp_plot, aes(x = Periodo, y = Valor_12m, fill = rubrica_simples)) +
   tema() + theme(axis.title.y = element_text(hjust = 1))
 ```
 
-
-```{r}
-library(streamgraph)
-
-rec_plot %>% streamgraph(rubrica, Valor_12m, Periodo) %>%
-  sg_axis_x(2, "year", "%Y") %>%
-  sg_fill_manual(brewer.pal(8, "Blues")[5:8])
-#  sg_fill_brewer("Blues")
-
-```
-
-```{r, fig.width=9}
-desp_plot %>% streamgraph(rubrica, Valor_12m, Periodo) %>%
-  sg_axis_x(2, "year", "%Y") %>%
-  sg_fill_brewer("Reds")
-
-```
-
-
 Vamos marcar o primeiro valor negativo
 
 ```{r}
@@ -377,7 +375,7 @@ grafico_linha <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado
 
 diminuir width!
 
-```{r}
+```{r, cache=TRUE}
 gif_linhas <- grafico_linha +
   transition_reveal(1, Periodo) 
 #  labs(subtitle = "{frame_along}") 
@@ -389,3 +387,19 @@ animate(gif_linhas, nframes = round(nrow(serie)/1.5, 0), height = 480, width = 8
 
 ```
 
+```{r, fig.width=9}
+# código não usado
+
+library(streamgraph)
+
+# rec_plot %>% streamgraph(rubrica, Valor_12m, Periodo) %>%
+#   sg_axis_x(2, "year", "%Y") %>%
+#   sg_fill_manual(brewer.pal(8, "Blues")[5:8])
+# #  sg_fill_brewer("Blues")
+# 
+# 
+# desp_plot %>% streamgraph(rubrica, Valor_12m, Periodo) %>%
+#   sg_axis_x(2, "year", "%Y") %>%
+#   sg_fill_brewer("Reds")
+
+```
