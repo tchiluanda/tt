@@ -20,9 +20,22 @@ knitr::opts_chunk$set(
 h1, h2, h3, h4 {
   color: #1E4C7A;
 }
+
+.destaque {
+  margin: 10px 30px;
+  font-size: 12px;
+  color: "white";
+  background-color: #e59405;
+  padding: 5px 10px;
+  border: 2px solid #BA3917;
+}
+
+.center {
+  margin: auto;
+}
 ```
 
-![home_TT_rtn.gif]
+![](home_TT_rtn.gif)
 
 O gráfico acima demonstra a evolução do "Resultado Primário do Governo Central", uma das principais informações fiscais apuradas e divulgada pelo Teosuro Nacional. 
 Os valores representam, para cada mês, a soma dos resultados mensais, atualizados por um índice de inflação, o IPCA, dos últimos 12 meses. Os resultados positivos são indicados pela cor **<span style="color: #1E4C7A">azul</span>**; os negativos, pela cor **<span style="color: #E41A1C">vermelha</span>**. 
@@ -90,128 +103,9 @@ Mensalmente o Tesouro Nacional faz a divulgação do [Resultado do Tesouro Nacio
 tabela <- read_excel("rtn.xlsx", sheet = "1.1-A", skip = 4)
 ```
 
-![](indice_RTN.PNG)
+Vamos utilizar a planilha "1.1-A - Resultado Primário do Governo Central - Mensal - Valores reais (IPCA)", que já apresenta os valores históricos atualizados pelos índices de inflação do IPCA.
 
-Como indicado na figura, vamos utilizar a planilha "1.1-A - Resultado Primário do Governo Central - Mensal - Valores reais (IPCA)", que já apresenta os valores históricos atualizados pelos índices de inflação do IPCA.
-
-```{r}
-serie <- tabela %>% 
-  rename(rotulos = 1) %>%
-  filter(str_detect(rotulos, "VI. PRIMÁRIO GOVERNO") |
-           str_detect(rotulos, "Deflator - IPCA")) %>%
-  mutate(rotulos = c("Valor", "IPCA")) %>%
-  gather(-1, key = "Periodo", value = "Valores") %>%
-  spread(key = rotulos, value = Valores) %>%
-  mutate(Valor = as.numeric(Valor),
-         IPCA = as.numeric(IPCA),
-         Periodo = as.Date(as.numeric(Periodo), origin = "1899-12-30"),
-         Ano = lubridate::year(Periodo),
-         Mes = lubridate::month(Periodo),
-         Valor_12m = zoo::rollapply(Valor, width = 12, FUN = sum, fill = NA, align = 'right'),
-         Resultado = ifelse(Valor_12m > 0, "Positivo", "Negativo"),
-         Data = paste0(Ano, " - ", meses[Mes])) %>%
-  filter(!is.na(Valor_12m))
-  # filter(Periodo >= "2006-01-01") # para ficar igual à série da dívida
-
-
-# Para poder fazer um gráfico de area, precisamos segmentar o gráfico/série em grupo contíguos. Ou seja, agrupar as sequencias de negativos e positivos.
-
-palavra_chave <- "Grupo_"
-i <- 1
-ultimo_grupo <- paste0("Grupo_", i)
-grupo <- c(ultimo_grupo)
-
-vetor <- serie$Resultado
-
-for (j in 2:length(vetor)) {
-  if (vetor[j] != vetor[j-1]) {
-    i <- i+1
-    ultimo_grupo <- paste0("Grupo_", i)
-  }
-  grupo <- c(grupo, ultimo_grupo)
-}
-
-serie$Grupos <- grupo
-```
-
-No gráfico apresentado na página inicial do Tesouro Transparente, apresentamos o Resultado Primário a partir de 2006, para que o período coincidisse com o período do gráfico da Dívida Pública Federal. Aqui, no entanto, vamos visualizar as séries inteiras. 
-
-Destacamos a região a partir de novembro de 2014, mês em que se observou pela primeira vez um déficit primário em 12 meses.
-
-```{r, fig.width=9}
-primeiro_mes_negativo <- subset(serie, serie$Resultado == "Negativo")$Periodo[1]
-
-plot_rtn <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = Resultado, group = 1)) +
-  annotate("rect", xmin = primeiro_mes_negativo, xmax = max(serie$Periodo) + 100, 
-           ymin = -Inf, ymax = Inf, fill = "#F0F5F7") +
-  annotate("text", x = primeiro_mes_negativo, y = -Inf, label = "11/2014", hjust = "center", 
-           vjust = "bottom", size = 2.5, fontface = 'plain', family = "Open Sans", color = "grey10") +
-  geom_area(aes(group = Grupos)) +
-  geom_line(size = 1) + 
-  geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
-  geom_point(aes(y = ifelse(Periodo == primeiro_mes_negativo, Valor_12m, NA)),
-             size = 3, shape = 21) +
-  scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
-  scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
-  scale_x_date(date_breaks = "2 years", 
-               date_labels = "%Y") +
-  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
-  coord_cartesian(clip = 'on') + 
-  labs(x = NULL, y = "R$ bilhões",
-       title = "Resultado Primário do Governo Central",
-       subtitle = "Soma dos últimos 12 meses, atualizados pelo IPCA") +
-  tema() + theme(axis.title.y = element_text(hjust = 1))
-
-plot_rtn
-
-```
-
-```{r, fig.width=9}
-primeiro_mes_negativo <- subset(rtn, rtn$Resultado == "Negativo")$Periodo[1]
-
-ggplot(rtn, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = Resultado, group = 1)) +
-  annotate("rect", xmin = primeiro_mes_negativo, xmax = max(rtn$Periodo) + 100, 
-           ymin = -Inf, ymax = Inf, fill = "#F0F5F7") +
-  annotate("text", x = primeiro_mes_negativo, y = -Inf, label = "11/2014", hjust = "center", 
-           vjust = "bottom", size = 2.5, fontface = 'plain', family = "Open Sans", color = "grey10") +
-  geom_area(aes(group = Resultado)) +
-  geom_line(size = 1) + 
-  geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
-  geom_point(aes(y = ifelse(Periodo == primeiro_mes_negativo, Valor_12m, NA)),
-             size = 3, shape = 21) +
-  scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
-  scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
-  scale_x_date(date_breaks = "2 years", 
-               date_labels = "%Y") +
-  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
-  coord_cartesian(clip = 'on') + 
-  labs(x = NULL, y = "R$ bilhões",
-       title = "Resultado Primário do Governo Central",
-       subtitle = "Soma dos últimos 12 meses, atualizados pelo IPCA") +
-  tema() + theme(axis.title.y = element_text(hjust = 1))
-
-
-```
-
-```{r}
-png(filename="teste.png", 
-    type="cairo",
-    units="in", 
-    width=9.5, 
-    height=6, 
-    pointsize=12, 
-    res=400)
-plot_rtn
-dev.off()
-```
-
-O resultado primário corresponde à diferença entre Receitas e Despesas. Quando as receitas superam as despesas, temos um _superávit primário_. Era o que ocorria até novembro de 2014, como a figura indica. A partir desse mês, o Governo Central passou a incorrer em _déficit primário_ no acumulado em 12 meses. 
-
-Para deixar essa relação mais clara, vamos visualizar o comportamento das receitas e das despesas.
-
-## As receitas e as despesas primárias
-
-```{r}
+```{r, processamento-dos-dados}
 
 # criando a função geral de processamento para tratar a tabela original e gerar os sub-datasets já num formato tidy
 
@@ -252,29 +146,136 @@ rtn <- pipe_da_tabela(tabela %>% rename(rotulos = 1) %>%
 
 ```
 
+No gráfico apresentado na página inicial do Tesouro Transparente, apresentamos o Resultado Primário a partir de 2006, para que o período coincidisse com o período do gráfico da Dívida Pública Federal. Aqui, no entanto, vamos visualizar as séries inteiras. 
+
+Para chegar ao gráfico do resultado, vamos inicialmente observar o comportamento de seus componentes: as receitas e despesas primárias.
+
+## As receitas e as despesas primárias
+
 Neste documento, mostraremos apenas um panorama geral da composição e do comportamento das receitas e despesas primárias.
 
 As tabelas do RTN demonstram a composição das receitas e despesas primárias nas suas diversas rubricas. Mensalmente, na divulgação do RTN, o Tesouro publica o Relatório e a Apresentação do RTN. Esses documentos buscam evidenciar e analisar as principais alterações nos componentes das Receitas e Despesas primárias ocorridas no mês de referência.
 
 Aqui no Tesouro Transparente, a história ["Ressignificando o Resultado do Tesouro Nacional"](http://www3.tesourotransparente.gov.br/historias/ressignificando-o-resultado-do-tesouro-nacional) permite explorar de forma visual e interativa toda a série histórica e todas as rubricas que compõem o RTN, além de contextualizar os dados apresentados por meio da exibição dos próprios relatórios mensais de todo o período (desde 1997!) a partir de um simples clique.
 
+### As receitas
 
+Se visualizarmos as receitas totais acumuladas nos últimos 12 meses para cada mês de referência, a partir dos dados disponíveis na planilha, obteremos o seguinte gráfico.
 
-```{r}
-
-# Como os grupos coincidem temporalmente, vou trazer, pela data, a coluna de Resultado do df serie.
-
+```{r, fig.width=9}
 rec_desp_plot <- rec_desp %>%
   spread(rubrica, Valor_12m) %>%
   mutate(resultado = Receita > Despesa,
          y_min = ifelse(resultado, Receita, Despesa),
          y_max = ifelse(!resultado, Receita, Despesa))
 
+ggplot(rec_desp_plot, aes(x = Periodo)) +
+  geom_line(aes(y = Receita), color = azul, size = 1.5) + 
+  geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
+  scale_x_date(date_breaks = "2 years", 
+               date_labels = "%Y") +
+  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
+  coord_cartesian(clip = 'on') + 
+  labs(x = NULL, y = "R$ bilhões",
+       title = "Receitas Primárias Líquidas do Governo Central",
+       subtitle = "Soma dos últimos 12 meses, atualizados pelo IPCA") +
+  tema() + theme(axis.title.y = element_text(hjust = 1))
+
 ```
+
+Como dito, as tabelas do RTN evidenciam a composição dessas receitas. Esses componentes possuem muitas vezes uma estrutura hierárquica, agrupando rubricas mais detalhadas em classificadores mais concisos. Observando a estrutura da tabela 1.1-A, percebe-se que as receitas se desdobram, num primeiro nível, nas seguintes rubricas:
+
+* Receita Administrada pela RFB (composta principalmente por impostos e contribuições, exceto as contribuições previdenciárias);
+* Incentivos Fiscais;
+* Arrecadação Líquida para o RGPS (composta principalmente pelas contribuições previdenciárias destinadas ao Regime Geral de Previdência Social); e
+* Receitas Não Administradas pela RFB (composta por diversas receitas, tais como concessões e permissões, dividendos, contribuições previdenciárias do servidores federais, Compensações financeiras etc.).
+
+Apenas para dar uma idéia da composição do gráfico anterior, a figura seguinte mostra o desdobramento das receitas primárias nessas rubricas. Há uma nuance, no entanto: o gráfico anterior mostra as receitas primárias **líquidas**, ou seja, descontadas das transferências a Estados, Municípios e Distrito Federal por repartição de receita. Já o gráfico abaixo mostra as receitas totais, antes da distribuição das receitas aos demais entes federados.
+
+```{r, fig.width=9}
+receitas <- c("I.1 -  Receita Administrada pela RFB", "I.2 -  Incentivos Fiscais", 
+"I.3 -  Arrecadação Líquida para o RGPS", "I.4 -  Receitas Não Administradas pela RFB"
+)
+
+receitas_simplificada <- data.frame("rubrica" = receitas, "rubrica_simples" = c("Receitas administradas pela RFB", "Incentivos Fiscais", "Arrecadação líquida RGPS", "Receitas não administradas pela RFB"))
+
+rec_plot <- rec%>%filter(str_detect(rubrica, "-")) %>%
+  left_join(receitas_simplificada)
+
+paleta_receitas <- rev(brewer.pal(9, "Blues")[c(3,5,6,8)])
+paleta_texto_rec <- c("white", rep("#1f476a", 3))
+
+ggplot(data = rec_plot, aes(x = Periodo, y = Valor_12m, fill = rubrica)) +
+  geom_area(color = NA) + 
+  geom_text(aes(color = rubrica, label = ifelse(Periodo == max(Periodo), as.character(rubrica_simples), NA)), size = 3.5, position = position_stack(vjust = 0.5), hjust = "right", family = "Open Sans") +
+  scale_fill_manual(values = paleta_receitas) + 
+  scale_color_manual(values = paleta_texto_rec) +
+  scale_x_date(date_breaks = "2 years", 
+               date_labels = "%Y") +
+  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
+  coord_cartesian(clip = 'on') + 
+  labs(x = NULL, y = "R$ bilhões", title = "Composição básica da Receita Primária Total", subtitle = "Soma dos últimos 12 meses, atualizados pelo IPCA") +
+  tema() + theme(axis.title.y = element_text(hjust = 1))
+```
+
+<div class = "destaque">
+Mais uma vez, recomendamos acessar o ["Ressignificando o Resultado do Tesouro Nacional"](http://www3.tesourotransparente.gov.br/historias/ressignificando-o-resultado-do-tesouro-nacional) para uma exploração interativa e completa de todas as rubricas do RTN!
+</div>
+
+### Despesas
+
+Se adotarmos o mesmo procedimento para as despesas, obteremos inicialmente o gráfico abaixo.
+
+```{r}
+ggplot(rec_desp_plot, aes(x = Periodo)) +
+  geom_line(aes(y = Despesa), color = vermelho, size = 1.5) + 
+  geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
+  scale_x_date(date_breaks = "2 years", 
+               date_labels = "%Y") +
+  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
+  coord_cartesian(clip = 'on') + 
+  labs(x = NULL, y = "R$ bilhões",
+       title = "Despesas Primárias do Governo Central",
+       subtitle = "Soma dos últimos 12 meses, atualizados pelo IPCA") +
+  tema() + theme(axis.title.y = element_text(hjust = 1))
+```
+
+
+```{r, fig.width=9}
+primeiro_mes_negativo <- subset(rtn, rtn$Resultado == "Negativo")$Periodo[1]
+
+ggplot(rtn, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = Resultado, group = 1)) +
+  annotate("rect", xmin = primeiro_mes_negativo, xmax = max(rtn$Periodo) + 100, 
+           ymin = -Inf, ymax = Inf, fill = "#F0F5F7") +
+  annotate("text", x = primeiro_mes_negativo, y = -Inf, label = "11/2014", hjust = "center", 
+           vjust = "bottom", size = 2.5, fontface = 'plain', family = "Open Sans", color = "grey10") +
+  geom_area(aes(group = Resultado)) +
+  geom_line(size = 1) + 
+  geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
+  geom_point(aes(y = ifelse(Periodo == primeiro_mes_negativo, Valor_12m, NA)),
+             size = 3, shape = 21) +
+  scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
+  scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
+  scale_x_date(date_breaks = "2 years", 
+               date_labels = "%Y") +
+  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
+  coord_cartesian(clip = 'on') + 
+  labs(x = NULL, y = "R$ bilhões",
+       title = "Resultado Primário do Governo Central",
+       subtitle = "Soma dos últimos 12 meses, atualizados pelo IPCA") +
+  tema() + theme(axis.title.y = element_text(hjust = 1))
+
+
+```
+
+O resultado primário corresponde à diferença entre Receitas e Despesas. Quando as receitas superam as despesas, temos um _superávit primário_. Era o que ocorria até novembro de 2014, como a figura indica. A partir desse mês, o Governo Central passou a incorrer em _déficit primário_ no acumulado em 12 meses. 
+
+Para deixar essa relação mais clara, vamos visualizar o comportamento das receitas e das despesas.
+
 
 ```{r, fig.width=9}
 plot_rec_desp <- ggplot(rec_desp_plot, aes(x = Periodo)) +
-  annotate("rect", xmin = primeiro_mes_negativo, xmax = max(serie$Periodo) + 100, 
+  annotate("rect", xmin = primeiro_mes_negativo, xmax = max(rtn$Periodo) + 100, 
            ymin = 0, ymax = Inf, fill = "#F0F5F7") +
   geom_line(aes(y = Receita), color = azul, size = 1.5) + 
   geom_line(aes(y = Despesa), color = vermelho, size = 1.5) + 
@@ -296,28 +297,7 @@ plot_rec_desp + geom_ribbon(aes(ymin = y_min, ymax = y_max, fill = resultado),
 
 ## Receitas
 
-```{r, fig.width=9}
-receitas <- c("I.1 -  Receita Administrada pela RFB", "I.2 -  Incentivos Fiscais", 
-"I.3 -  Arrecadação Líquida para o RGPS", "I.4 -  Receitas Não Administradas pela RFB"
-)
 
-receitas_simplificada <- data.frame("rubrica" = receitas, "rubrica_simples" = c("Receita administradas pela RFB", "Incentivos Fiscais", "Arrecadação líquida RGPS", "Receitas não administradas pela RFB"))
-
-rec_plot <- rec%>%filter(str_detect(rubrica, "-")) %>%
-  left_join(receitas_simplificada)
-
-
-ggplot(rec_plot, aes(x = Periodo, y = Valor_12m, fill = rubrica)) +
-  geom_area(color = "white", size = 1) + 
-  geom_text(aes(label = ifelse(Periodo == max(Periodo), as.character(rubrica_simples), NA)), size = 3, position = position_stack(vjust = 0.5), hjust = "right", family = "Open Sans") +
-  scale_fill_brewer(palette = "Blues", direction = -1) + 
-  scale_x_date(date_breaks = "2 years", 
-               date_labels = "%Y") +
-  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
-  coord_cartesian(clip = 'on') + 
-  labs(x = NULL, y = "R$ bilhões") +
-  tema() + theme(axis.title.y = element_text(hjust = 1))
-```
 
 ##despesas
 
@@ -347,48 +327,22 @@ ggplot(desp_plot, aes(x = Periodo, y = Valor_12m, fill = rubrica_simples)) +
 
 Vamos marcar o primeiro valor negativo
 
-```{r}
-grafico_linha <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = Resultado, group = 1)) +
-  geom_area(aes(group = Grupos)) +
-  geom_line(size = 1) + 
-  geom_point(size = 3, shape = 21, fill = "#f0f5f7") +
-  geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
-  scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
-  scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
-  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
-  scale_x_date(date_breaks = "1 years", 
-               date_labels = "%Y", 
-               limits = c(min(serie$Periodo), NA)) +
-  coord_cartesian(clip = 'off') + 
-  labs(x = NULL, y = "R$ bilhões") +
-  geom_text(aes(x = Periodo + 200,
-                label = format(round(Valor_12m/1000,0), 
-                                      big.mark = ".", 
-                                      decimal.mark = ",")),
-            size = 6, fontface = 'plain', family = "Open Sans SemiBold") +
-  tema()
-```
-
-```{r}
-
-```
-
 
 diminuir width!
 
-```{r, cache=TRUE}
+```{r eval=FALSE, cache=TRUE, include=FALSE}
 gif_linhas <- grafico_linha +
   transition_reveal(1, Periodo) 
 #  labs(subtitle = "{frame_along}") 
 
-animate(gif_linhas, nframes = round(nrow(serie)/1.5, 0), height = 480, width = 800)
+animate(gif_linhas, nframes = round(nrow(rtn)/1.5, 0), height = 480, width = 800)
 
 
 #anim_save("historia_graf_rtn.gif", animation = last_animation())
 
 ```
 
-```{r, fig.width=9}
+```{r eval=FALSE, fig.width=9, include=FALSE}
 # código não usado
 
 library(streamgraph)
