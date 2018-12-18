@@ -69,6 +69,11 @@ tema_gif <- function() {
         plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2))
 }
 
+vermelho <- brewer.pal(3, name = "Set1")[1]
+azul <- "#1f476a" 
+
+vermelho_claro <- "#ee7576"
+azul_claro     <- "#2c90bf" # "#87b1d4"
 
 ```
 
@@ -90,9 +95,6 @@ tabela <- read_excel("rtn.xlsx", sheet = "1.1-A", skip = 4)
 Como indicado na figura, vamos utilizar a planilha "1.1-A - Resultado Primário do Governo Central - Mensal - Valores reais (IPCA)", que já apresenta os valores históricos atualizados pelos índices de inflação do IPCA.
 
 ```{r}
-
-meses <- c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
-
 serie <- tabela %>% 
   rename(rotulos = 1) %>%
   filter(str_detect(rotulos, "VI. PRIMÁRIO GOVERNO") |
@@ -132,17 +134,11 @@ for (j in 2:length(vetor)) {
 serie$Grupos <- grupo
 ```
 
-No gráfico apresentado na página inicial do Tesouro Transparente, apresentamos o Resultado Primário a partir de 2006, para que o período coincidisse com o período do gráfico da Dívida Pública Federal. Aqui, no entanto, vamos visualizar a série inteira. 
+No gráfico apresentado na página inicial do Tesouro Transparente, apresentamos o Resultado Primário a partir de 2006, para que o período coincidisse com o período do gráfico da Dívida Pública Federal. Aqui, no entanto, vamos visualizar as séries inteiras. 
 
 Destacamos a região a partir de novembro de 2014, mês em que se observou pela primeira vez um déficit primário em 12 meses.
 
 ```{r, fig.width=9}
-vermelho <- brewer.pal(3, name = "Set1")[1]
-azul <- "#1f476a" # brewer.pal(3, name = "Set1")[2]
-verde <- brewer.pal(3, name = "Set1")[3]
-
-vermelho_claro <- "#ee7576"
-azul_claro     <- "#2c90bf" # "#87b1d4"
 primeiro_mes_negativo <- subset(serie, serie$Resultado == "Negativo")$Periodo[1]
 
 plot_rtn <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = Resultado, group = 1)) +
@@ -168,25 +164,31 @@ plot_rtn <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fil
 
 plot_rtn
 
-# opção com barra em cima dos tick marks indicando o período negativo e o período positivo
-# plot_rtn <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = Resultado, group = 1)) +
-#   geom_area(aes(group = Grupos)) +
-#   geom_line(size = 1) + 
-#   geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
-#   scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
-#   scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
-#   scale_x_date(date_breaks = "2 years", 
-#                date_labels = "%Y") +
-#   scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
-#   coord_cartesian(clip = 'off') + 
-#   geom_rect(xmin = min(serie$Periodo), xmax = primeiro_mes_negativo, 
-#             ymin = min(serie$Valor_12m)-29e3, ymax = min(serie$Valor_12m)-20e3,
-#             color = NA, fill = azul_claro) +
-#   geom_rect(xmin = primeiro_mes_negativo, xmax = max(serie$Periodo), 
-#             ymin = min(serie$Valor_12m)-29e3, ymax = min(serie$Valor_12m)-20e3,
-#             color = NA, fill = vermelho_claro) +
-#   labs(x = NULL, y = "R$ bilhões") +
-#   tema() + theme(axis.title.y = element_text(hjust = 1))
+```
+
+```{r, fig.width=9}
+primeiro_mes_negativo <- subset(rtn, rtn$Resultado == "Negativo")$Periodo[1]
+
+ggplot(rtn, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = Resultado, group = 1)) +
+  annotate("rect", xmin = primeiro_mes_negativo, xmax = max(rtn$Periodo) + 100, 
+           ymin = -Inf, ymax = Inf, fill = "#F0F5F7") +
+  annotate("text", x = primeiro_mes_negativo, y = -Inf, label = "11/2014", hjust = "center", 
+           vjust = "bottom", size = 2.5, fontface = 'plain', family = "Open Sans", color = "grey10") +
+  geom_area(aes(group = Resultado)) +
+  geom_line(size = 1) + 
+  geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
+  geom_point(aes(y = ifelse(Periodo == primeiro_mes_negativo, Valor_12m, NA)),
+             size = 3, shape = 21) +
+  scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
+  scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
+  scale_x_date(date_breaks = "2 years", 
+               date_labels = "%Y") +
+  scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
+  coord_cartesian(clip = 'on') + 
+  labs(x = NULL, y = "R$ bilhões",
+       title = "Resultado Primário do Governo Central",
+       subtitle = "Soma dos últimos 12 meses, atualizados pelo IPCA") +
+  tema() + theme(axis.title.y = element_text(hjust = 1))
 
 
 ```
@@ -210,6 +212,9 @@ Para deixar essa relação mais clara, vamos visualizar o comportamento das rece
 ## As receitas e as despesas primárias
 
 ```{r}
+
+# criando a função geral de processamento para tratar a tabela original e gerar os sub-datasets já num formato tidy
+
 pipe_da_tabela <- function(dados) {
   dados %>% 
   rename(rotulos = 1) %>%
@@ -221,10 +226,14 @@ pipe_da_tabela <- function(dados) {
   filter(!is.na(Valor_12m))
 }
 
+# linhas de interesse para cada sub-dataset
+
 linha_RecTotal <- which(tabela$`Discriminação` == "I. RECEITA TOTAL")
 linha_Transf <- which(tabela$`Discriminação` == "II. TRANSF. POR REPARTIÇÃO DE RECEITA")
 linha_DespTotal <- which(tabela$`Discriminação` == "IV. DESPESA TOTAL")
 linha_FSB <- which(tabela$`Discriminação` == "V. FUNDO SOBERANO DO BRASIL")
+
+# gerando os sub-datasets para cada gráfico
 
 rec_desp <- pipe_da_tabela(tabela %>% rename(rotulos = 1) %>%
                              filter(str_detect(rotulos, "RECEITA LÍQUIDA") | 
@@ -237,17 +246,9 @@ rec <- pipe_da_tabela(tabela %>%
 desp <- pipe_da_tabela(tabela %>% 
                         filter(row_number() >= linha_DespTotal & row_number() <= linha_FSB - 1))
 
-# rec <- tabela %>% 
-#   rename(rotulos = 1) %>%
-#   filter(row_number() >= linha_RecTotal & row_number() <= linha_Transf - 1) %>%
-#   gather(-1, key = "Periodo", value = "Valores") %>%
-#   spread(key = rotulos, value = Valores) %>%
-#   mutate_at(-1, funs(zoo::rollapply(as.numeric(.), width = 12, FUN = sum, fill = NA, align = 'right'))) %>%
-#   mutate(Periodo = as.Date(as.numeric(Periodo), origin = "1899-12-30"),
-#          Ano = lubridate::year(Periodo),
-#          Mes = lubridate::month(Periodo)) %>%
-#   gather(-1, key = "rubrica", value = "Valor_12m") %>%
-#   filter(!is.na(Valor_12m))
+rtn <- pipe_da_tabela(tabela %>% rename(rotulos = 1) %>%
+                        filter(str_detect(rotulos, "VI. PRIMÁRIO GOVERNO"))) %>%
+  mutate(Resultado = ifelse(Valor_12m > 0, "Positivo", "Negativo"))
 
 ```
 
