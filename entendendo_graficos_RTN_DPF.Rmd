@@ -1,5 +1,4 @@
 ---
-title: "Entendendo os gráficos: resultado primário e estoque da dívida pública federal"
 output: 
    html_document:
      code_folding: hide
@@ -245,8 +244,7 @@ Vamos colorir no gráfico as regiões que correspondem aos períodos de resultad
 ggplot(rec_desp_plot, aes(x = Periodo)) +
   annotate("rect", xmin = primeiro_mes_negativo, xmax = max(rtn$Periodo) + 100, 
            ymin = 0, ymax = Inf, fill = "#F0F5F7") +
-  geom_ribbon(aes(ymin = y_min, ymax = y_max, fill = resultado,
-                  alpha = 0.5), color = NA) +
+  geom_ribbon(aes(ymin = y_min, ymax = y_max, fill = resultado), color = NA) +
   geom_line(aes(y = Receita), color = azul, size = 1.2) + 
   geom_line(aes(y = Despesa), color = vermelho, size = 1.2) + 
   geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
