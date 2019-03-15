@@ -18,11 +18,13 @@ library(tidyverse)
 library(ckanr)
 library(readxl)
 library(scales)
-library(ipeaData)
+#library(ipeaData)
 library(extrafont)
 library(gganimate)
 library(RColorBrewer)
 library(lubridate)
+library(gifski)
+library(animation)
 
 tema <- function(){
     theme_minimal() +
@@ -33,11 +35,11 @@ tema <- function(){
       plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 20, color = "#1E4C7A"),
       plot.caption = element_text(face = "italic"),
       panel.grid.minor = element_blank(),
-      legend.text = element_text(size = 18),
-      legend.title = element_text(size = 18),
+      legend.text = element_text(size = 16), # era 18
+      legend.title = element_text(size = 16), # tb era 18
       axis.ticks = element_line(size = 0.5),
       axis.ticks.length = unit(.25, "cm"),
-      axis.title = element_text(size = 15),
+      axis.title = element_text(size = 14), # era 15
       legend.position = 'bottom')
   }
 
@@ -161,7 +163,9 @@ plot_din <- plot1 +
 
 animation::ani.options(antialias = "cleartype")
 animate(plot_din + ease_aes('quadratic-in-out'), bg = 'transparent', height = 488, width = 688)
+
 anim_save("divida_quadratic.gif", animation = last_animation())
+
 # animate(plot_din + ease_aes('sine-in-out'), height = 480, width = 800)
 # anim_save("divida_sine.gif", animation = last_animation())
 # animate(plot_din + ease_aes('linear'), height = 480, width = 800)
@@ -175,21 +179,17 @@ anim_save("divida_quadratic.gif", animation = last_animation())
 Gerando arquivos de imagem para cada frame.
 
 ```{r}
-divida_gif <- animate(plot_din, 
-                      device = "svg",
-                      bg = 'transparent',
-                      width = 688, 
-                      height = 488, 
-                      renderer = file_renderer("./gganim", prefix = "divida_gif", overwrite = TRUE))
-```
-
-
-```{r}
-library(magick)
-
-t1 <- magick::image_read(divida_gif[1])
-
-teste <- magick::image_append(c(divida_gif[1],divida_gif[2]))
+# divida_gif <- animate(plot_din, 
+#                       device = "svg",
+#                       bg = 'transparent',
+#                       width = 688, 
+#                       height = 488, 
+#                       renderer = file_renderer("./gganim", prefix = "divida_gif", overwrite = TRUE))
+# library(magick)
+# 
+# t1 <- magick::image_read(divida_gif[1])
+# 
+# teste <- magick::image_append(c(divida_gif[1],divida_gif[2]))
 ```
 
 ### Equalizador
