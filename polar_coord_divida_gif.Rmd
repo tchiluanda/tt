@@ -30,13 +30,13 @@ tema <- function(){
     theme_minimal() +
     theme(
       text = element_text(family = "Open Sans", colour = "grey20"),
-      axis.text = element_text(family = "Open Sans", colour = "grey20", size = 15),
+      axis.text = element_text(family = "Open Sans", colour = "grey20", size = 14), # era 15
       title = element_text(face = "bold"), # size para o Shiny
       plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 20, color = "#1E4C7A"),
       plot.caption = element_text(face = "italic"),
       panel.grid.minor = element_blank(),
-      legend.text = element_text(size = 16), # era 18
-      legend.title = element_text(size = 16), # tb era 18
+      legend.text = element_text(size = 15), # era 18
+      legend.title = element_text(size = 15), # tb era 18
       axis.ticks = element_line(size = 0.5),
       axis.ticks.length = unit(.25, "cm"),
       axis.title = element_text(size = 14), # era 15
@@ -260,14 +260,12 @@ dados_plot_frag <- resgates_frag
 
 plot_equalizador <- ggplot(dados_plot_frag, aes(x = Mes, y = Valor_faixa, fill = Faixa)) +
   geom_col(width = 0.4, color = 'white') +
-  geom_text(aes(label = ifelse(Ano == 2018, 
-                               format(round(Valor/1000,0), 
+  geom_text(aes(label = format(round(Valor/1000,0), 
                                       big.mark = ".", 
                                       decimal.mark = ","),
-                               NA),
                 y = Valor + 15000,
                 color = Valor),
-            size = 5.5, fontface = 'plain', 
+            size = 5, fontface = 'plain', 
             family = "Open Sans") +
   scale_y_continuous(limits = c(-50000, NA), breaks = (0:7)*intervalo, 
                      labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
@@ -303,8 +301,8 @@ plot_din_frag <- plot_eq_polar + # + theme(panel.grid.major.x = element_blank())
   transition_states(Ano, 1, 4, wrap = FALSE)
 
 animate(plot_din_frag + ease_aes('linear'), 
-        bg = 'transparent', height = 488, width = 688, 
-        renderer = gifski_renderer(loop = FALSE))
+        bg = 'transparent', height = 488, width = 688) #, 
+        #renderer = gifski_renderer(loop = FALSE))
 
 # anim_save("divida_polar.gif", animation = last_animation())
 
