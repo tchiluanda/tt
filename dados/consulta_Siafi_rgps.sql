@@ -107,7 +107,7 @@ from	(select	a11.ID_SUBFUNCAO_PT  ID_SUBFUNCAO_PT,
 		a16.ID_MES = a110.ID_MES)
 	where	(a15.ID_ITEM_INFORMACAO in (61)
 	 and a19.ID_ORCA_FISCAL_ORGAO in (0)
-	 and a17.ID_UO not in (40904, 55902, 33904)
+	 and a17.ID_UO in (40904, 55902, 33904)
 	 and a110.ID_ANO between 2008 and 2018
 	 and a16.ID_MES not in (0, 13, 14)
 	 and a14.ID_ANO = a110.ID_ANO
