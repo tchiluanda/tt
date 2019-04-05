@@ -26,8 +26,9 @@ tema <- function(){
     theme(
       text = element_text(family = "Open Sans", colour = "grey20"),
       axis.text = element_text(family = "Open Sans", colour = "grey20", size = 16),
-      title = element_text(face = "bold"), # size para o Shiny
-      plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 20, color = "#1E4C7A"),
+      title = element_text(face = "bold", size = 16, color = "#1E4C7A"), # size para o Shiny
+      plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 16,
+                                   colour = "grey20"),
       plot.caption = element_text(face = "italic"),
       panel.grid.major = element_blank(), 
       panel.grid.minor = element_blank(),
@@ -55,6 +56,8 @@ PIBs do período
 ```{r}
 pibs <- ipeadata("BM12_PIBAC12")
 pibs <- pibs[MES=="12" & ANO %in% (2008:2017)]$VALVALOR
+
+pibs <- c(3109803.10,3333039.40,3885847.00,4376382.00,4814760.00,5331619.00,5778953.00,5995787.00,6267205.00,6553842.70)
 
 names(pibs) <- as.character(c(2008:2017))
 
@@ -163,6 +166,56 @@ Agora incorporemos as cores aos dados:
 dados_com_cores <- dados %>%
   left_join(tabela_cores)
 ```
+
+# A ideia do rank (https://www.r-bloggers.com/how-to-build-animated-bar-plots-using-r/)
+
+```{r}
+dados_format <- dados_com_cores %>%
+  group_by(Ano) %>%
+  mutate(rank = rank(-Valor))
+
+plot_estatico2 <- ggplot(dados_format, aes(y = Valor, x = rank)) +
+  geom_bar(aes(fill = CoresNormais), width = 0.8, stat = 'identity') +
+  geom_text(aes(y = Valor + 0.003, 
+                label = percent(round(Valor, 4)),
+                color = CoresEscuras), # color = CoresEscuras
+            position = position_dodge(1),
+            size = 5, family = "Open Sans Condensed Light", vjust = 'center') +  # color = '#1E4C7A') +
+  geom_text(aes(y=0, label = paste(Categoria_reduzida, " "), color = CoresEscuras), 
+            vjust = 0.2, hjust = 1, check_overlap = TRUE, family = "Open Sans", size = 4) +
+  coord_flip(clip = "off", expand = FALSE) +
+  scale_y_continuous(labels = percent) + #, expand = expand_scale(add = c(0.2,0) 
+  scale_x_reverse() +
+  scale_fill_identity() +
+  scale_color_identity() +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = NULL
+  ) +
+  #geom_text(aes(label = Ano), x = 1, y = 0.05, size = 5) +
+  tema() +
+  theme(legend.position = 'none') + theme(axis.ticks.y = element_blank(),
+                                          axis.ticks.x = element_blank(),
+                                          axis.text.x  = element_blank(),
+                                          axis.text.y  = element_blank(),
+                                          plot.margin = margin(1, 2, 0, 4.5, "cm"))
+
+plot_estatico2
+
+anim = plot_estatico2 + transition_states(Ano, transition_length = 4, state_length = 1) +
+  labs(title = 'Despesas da União : {closest_state}',  
+       subtitle  =  "Em percentual do PIB",
+       caption  = "Fonte: Siafi") +
+  ease_aes('cubic-in-out')
+
+animate(anim, nframes = 120, width = 788, height = 488, 
+        renderer = gifski_renderer()) 
+
+anim_save("despesas_new.gif", animation = last_animation())
+
+```
+
 
 Agora no plot vou usar o `scale_fill_identity`!
 
