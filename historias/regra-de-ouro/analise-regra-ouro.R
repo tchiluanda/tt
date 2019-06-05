@@ -8,7 +8,7 @@ dados_originais <- read_excel("aplic_rec_emissoes.xlsx", skip = 8)
 meses <- c("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")
 MESES <- str_to_upper(meses)
 
-dados <- dados_originais %>% 
+dados <- dados_originais %>%
   rename(mes = 1, cod_grupo = 2, nom_grupo = 3, valor = 4) %>%
   mutate(grupo = paste(cod_grupo, "-", nom_grupo)) %>%
   separate(mes, into = c("mes", "ano"), sep = "/") %>%
@@ -64,5 +64,7 @@ ggplot(dados_ordenados, aes(x = periodo, y = valor, fill = grupo)) +
   scale_y_continuous(labels = function(x){format(x/1e9, big.mark = ".", decimal.mark = ",")}) +
   labs(x = NULL, y = "R$ bi") +
   tema()
+
+a <- b >= c 
 
 
