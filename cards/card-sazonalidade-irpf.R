@@ -82,7 +82,7 @@ graficos_areas <- purrr::map(paletas, graf_area)
 names(graficos_areas) <- paletas
 
 ggsave("graf_area_gg.png", plot = graficos_areas[["inferno"]],
-       width=9.36, height=6, dpi = 500, pointsize = 10)
+       width=6, height=6, dpi = 500, pointsize = 10) #9.36 x 6
 
 
 graficos_areas[["inferno"]] +  
