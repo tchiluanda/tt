@@ -173,9 +173,9 @@ graf_anim2 <- graf2 + complemento_tema_gif() +
   shadow_mark(alpha = .2, size = 1)
 
 graf_anim %>% animate(type = "cairo", nframes = 150)
-graf_anim2 %>% animate(type = "cairo", nframes = 250)
+graf_anim2 %>% animate(type = "cairo", nframes = 210)
 
-anim_save("sazonalidade_2.gif", animation = last_animation())
+anim_save("sazonalidade_3.gif", animation = last_animation())
 
 
 
