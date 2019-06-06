@@ -41,23 +41,32 @@ dados <- dados_originais %>%
          mes = lubridate::month(Data),
          nome_mes = factor(meses[mes], levels = meses))
 
-graf_area <- ggplot(dados, aes(y = valor, x = nome_mes, group = ano, fill =  ano)) +
-  geom_area(color = NA, stat = "identity", position = "identity", alpha = 0.2) +
+# pense na ginástica para inverter a ordem das áreas... para inverter precisava transformar em fator, mas em fator não conseguiria usar a escala contínua do viridis, aí reconverti para numérico e deu certo.
+
+graf_area <- ggplot(dados %>% mutate(
+  ano_inv = factor(ano, levels = rev(unique(dados$ano)))),
+                    aes(x = nome_mes, group = ano_inv, 
+                        fill = as.numeric(as.character(ano_inv)))) +
+  geom_area(aes(y = ifelse(ano == max(dados$ano), valor, NA)), 
+                color = NA, stat = "identity", position = 'identity') +
+  geom_polygon(aes(y = ifelse(ano != max(dados$ano), valor, NA)), 
+            color = NA, stat = "identity", position = 'identity') +
   coord_polar(start = -pi/12) +
-  #scale_color_viridis(option = "magma", direction = 1) + 
-  scale_fill_viridis(option = "magma", 
+  scale_fill_viridis(option = "inferno", 
                      direction = -1, 
-                     breaks = c(max(dados$ano), min(dados$ano))) +
+                     breaks = c(max(dados$ano), min(dados$ano)),
+                     guide = guide_colourbar(ticks = FALSE)) +
   scale_y_continuous(labels = function(v){format(v/1e6, big.mark = ".", decimal.mark = ",")})+
-  labs(x = NULL, y = NULL, fill = NULL) +
+  labs(x = NULL, y = "R$ milhões", fill = NULL) +
   tema() + theme(panel.grid.major.x = element_line(size = 0.05,  color = "#DDDDDD",
                                                    linetype = "dotted"),
                  legend.text = element_text(size = 8),
                  legend.position = "right")
 
-graf <- ggplot(dados, aes(y = valor, x = nome_mes, group = ano)) +
-  geom_polygon(aes(color = ano), fill = NA) + # geom_polygon fecha a figura do ano
-  #geom_line(aes(color = ano)) +
+
+graf_estatico <- ggplot(dados, aes(x = nome_mes, group = ano)) +
+  geom_polygon(aes(color = ano, y = ifelse(ano != max(dados$ano), valor, NA)), fill = NA) + # geom_polygon fecha a figura do ano
+  geom_line(aes(color = ano, y = ifelse(ano == max(dados$ano), valor, NA))) +
   coord_polar(start = -pi/12) +
   scale_color_viridis(option = "magma", 
                      direction = -1, 
@@ -68,10 +77,51 @@ graf <- ggplot(dados, aes(y = valor, x = nome_mes, group = ano)) +
   #                    breaks = c(max(dados$ano), min(dados$ano))) +
   scale_y_continuous(labels = function(v){format(v/1e6, big.mark = ".", decimal.mark = ",")})+
   labs(x = NULL, y = "R$ milhões", fill = NULL, color = NULL) +
-  tema() + theme(panel.grid.major.x = element_line(size = 0.05,  color = "#111111",
+  tema() + theme(panel.grid.major.x = element_line(size = 0.15,  color = "grey50",
                                                    linetype = "dotted"),
                  legend.text = element_text(size = 8),
                  legend.position = "right",
+                 axis.title.y = element_text(hjust = 0.6)) #angle = 0
+
+ggsave("graf.png", width=9.36, 
+       height=6, dpi = 500)
+
+png(filename="graf_cairo.png", 
+    type="cairo",
+    units="in", 
+    width=9.36, 
+    height=6, 
+    pointsize=12, 
+    res=500)
+graf_estatico
+dev.off()
+
+cor <- "firebrick"
+
+graf <- ggplot(dados, aes(x = nome_mes, group = ano)) +
+  geom_line(aes(y = valor),
+            color = cor,
+            size = 1.5) +
+  coord_polar(start = -pi/12) +
+  scale_y_continuous(labels = function(v){format(v/1e6, big.mark = ".", decimal.mark = ",")})+
+  labs(x = NULL, y = "R$ milhões", fill = NULL, color = NULL) +
+  tema() + theme(panel.grid.major.x = element_line(size = 0.15,  color = "grey50",
+                                                   linetype = "dotted"),
+                 legend.text = element_text(size = 8),
+                 axis.title.y = element_text(hjust = 0.6)) #angle = 0
+
+graf2 <- ggplot(dados, aes(x = nome_mes, group = ano)) +
+  geom_line(aes(y = valor, color = ano),
+            size = 1.5) +
+  coord_polar(start = -pi/12) +
+  scale_y_continuous(labels = function(v){format(v/1e6, big.mark = ".", decimal.mark = ",")})+
+  scale_color_viridis(option = "magma", 
+                      direction = -1, 
+                      breaks = c(max(dados$ano), min(dados$ano))) +
+  labs(x = NULL, y = "R$ milhões", fill = NULL, color = NULL) +
+  tema() + theme(panel.grid.major.x = element_line(size = 0.15,  color = "grey50",
+                                                   linetype = "dotted"),
+                 legend.text = element_text(size = 8),
                  axis.title.y = element_text(hjust = 0.6)) #angle = 0
 
 graf_anim <- graf + theme(legend.position = "none") + labs(title = '{closest_state}') +
@@ -79,21 +129,20 @@ graf_anim <- graf + theme(legend.position = "none") + labs(title = '{closest_sta
                     transition_length = 2,
                     state_length = 1) +
   #ease_aes('quadratic-in-out') +
-  shadow_mark(alpha = .5, color = "grey40")
+  shadow_mark(alpha = .5, size = 1, color = "grey40")
 
+graf_anim2 <- graf2 + theme(legend.position = "none") + labs(title = '{closest_state}') +
+  transition_states(ano,
+                    transition_length = 2,
+                    state_length = 1) +
+  #ease_aes('quadratic-in-out') +
+  shadow_mark(alpha = .2, size = 1)
 
 graf_anim %>% animate(type = "cairo", nframes = 150)
+graf_anim2 %>% animate(type = "cairo", nframes = 150)
 
-anim_save("despesas_new.gif", animation = last_animation())
+anim_save("sazonalidade_2.gif", animation = last_animation())
 
-ggsave("graf.png", dpi = 400)
 
-png(filename="graf.png", 
-    type="cairo",
-    units="in", 
-    width=9.36, 
-    height=6, 
-    pointsize=12, 
-    res=400)
-graf
-dev.off()
+
+
