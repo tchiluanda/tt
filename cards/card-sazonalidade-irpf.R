@@ -175,8 +175,46 @@ graf_anim2 <- graf2 + complemento_tema_gif() +
 graf_anim %>% animate(type = "cairo", nframes = 150)
 graf_anim2 %>% animate(type = "cairo", nframes = 210)
 
-anim_save("sazonalidade_3.gif", animation = last_animation())
+anim_save("sazonalidade_4.gif", animation = last_animation())
 
 
+
+# graf barra --------------------------------------------------------------
+
+sazo_area <- ggplot(dados %>% arrange(desc(ano)),
+                    aes(x = nome_mes,
+                        fill = ano)) +
+  geom_col(aes(y = valor), 
+           alpha = 1,
+           color = NA, position = 'identity') +
+  coord_polar(start = -pi/12) +
+  scale_fill_viridis(option = "magma", 
+                     direction = -1, 
+                     breaks = c(max(dados$ano), min(dados$ano)),
+                     guide = guide_colourbar(ticks = FALSE)) +
+  scale_y_continuous(labels = function(v){format(v/1e6, big.mark = ".", decimal.mark = ",")})+
+  labs(x = NULL, y = "R$ milhões", fill = NULL,
+       title = "Sazonalidade da arrecadação mensal do IRPF",
+       subtitle = "Valores de jan/1997 a abr/2019, atualizados pelo IPCA",
+       caption = "Fonte: \"Ressignificando o Resultado do Tesouro Nacional\"") +
+  tema() + theme(panel.grid.major.x = element_line(size = 0.25,  color = "#555555", #para sair no png. na visualização aqui usei size = .05 e color = #DDDDDD
+                                                   linetype = "dotted"),
+                 legend.text = element_text(size = 8),
+                 legend.position = "right")
+
+
+sazo_area_anim1 <- sazo_area +
+  labs(subtitle = 'Valores de {closest_state}, atualizados pelo IPCA') +
+  transition_reveal(ano) +
+  shadow_mark(alpha = .5)
+
+sazo_area_anim2 <- sazo_area +
+  labs(subtitle = 'Valores de {closest_state}, atualizados pelo IPCA') +
+  transition_states(ano,
+                    transition_length = 2,
+                    state_length = 1) +
+  shadow_mark(alpha = .5, size = 1, color = "grey40")
+
+sazo_area_anim1 %>% animate(type = "cairo", nframes = 150)
 
 
