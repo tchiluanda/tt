@@ -85,11 +85,9 @@ ggsave("graf_area_gg.png", plot = graficos_areas[["inferno"]],
        width=6, height=6, dpi = 500, pointsize = 10) #9.36 x 6
 
 
-graficos_areas[["inferno"]] +  
+graficos_areas[["magma"]] +  
   transition_reveal(ano) +
   shadow_mark(alpha = .5)
-
-
 
 # 
 # graf_estatico <- ggplot(dados, aes(x = nome_mes, group = ano)) +
@@ -181,11 +179,12 @@ anim_save("sazonalidade_4.gif", animation = last_animation())
 
 # graf barra --------------------------------------------------------------
 
-sazo_area <- ggplot(dados %>% arrange(desc(ano)),
+sazo_barra <- ggplot(dados %>% arrange(desc(ano)),
                     aes(x = nome_mes,
-                        fill = ano)) +
+                        fill = cor)) + #ano)) +
   geom_col(aes(y = valor), 
            alpha = 1,
+           width = 1,
            color = NA, position = 'identity') +
   coord_polar(start = -pi/12) +
   scale_fill_viridis(option = "magma", 
@@ -202,19 +201,20 @@ sazo_area <- ggplot(dados %>% arrange(desc(ano)),
                  legend.text = element_text(size = 8),
                  legend.position = "right")
 
+ggsave("graf_barra.png", plot = sazo_barra,
+       width=6, height=6, dpi = 500, pointsize = 10) #9.36 x 6
 
-sazo_area_anim1 <- sazo_area +
+sazo_barra_anim1 <- sazo_barra +
   labs(subtitle = 'Valores de {closest_state}, atualizados pelo IPCA') +
-  transition_reveal(ano) +
-  shadow_mark(alpha = .5)
+  transition_reveal(ano)
 
-sazo_area_anim2 <- sazo_area +
+sazo_barra_anim2 <- sazo_barra +
   labs(subtitle = 'Valores de {closest_state}, atualizados pelo IPCA') +
   transition_states(ano,
                     transition_length = 2,
                     state_length = 1) +
-  shadow_mark(alpha = .5, size = 1, color = "grey40")
+  shadow_mark(alpha = .5, size = 1, fill = "grey40")
 
-sazo_area_anim1 %>% animate(type = "cairo", nframes = 150)
+sazo_barra_anim2 %>% animate(type = "cairo", nframes = 150)
 
-
+anim_save("sazonalidade_barra.gif", animation = last_animation())
