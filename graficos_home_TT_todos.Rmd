@@ -206,7 +206,7 @@ grafico_linha_dpf <- ggplot(dpf, aes(x = Periodo, y = Valor_ipca, color = TRUE, 
   scale_x_date(date_breaks = "1 years", 
                date_labels = "%Y", 
                limits = c(as.Date("2006-01-01"), NA),
-               expand = expand_scale(mult = c(.04, .04))) +
+               expand = expand_scale(mult = c(.05, .04))) +
   coord_cartesian(ylim = c(min(dpf$Valor_ipca), max(dpf$Valor_ipca)),
                   clip = "on") + # ponto e valor iniciais fixos a seguit
   geom_point(size = 3, shape = 21, fill = "#f0f5f7",
@@ -240,14 +240,14 @@ Animando
 
 ```{r}
 gif_linhas_dpf <- grafico_linha_dpf +
-  transition_reveal(1, Periodo) 
- labs(subtitle = "{frame_along}") 
+  transition_reveal(Periodo) +
+  labs(subtitle = paste("Estoque atualizado pelo IPCA até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 
-animate(gif_linhas_dpf, nframes = nrow(dpf)/2, height = 488, width = 668,
+animate(gif_linhas_dpf, type = "cairo", nframes = nrow(dpf)/2, height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
 
 
-anim_save("home_TT_dpf_escala.gif", animation = last_animation())
+anim_save("home_TT_dpf_escala_com_cairo.gif", animation = last_animation())
 ```
 
 ## Despesas União
