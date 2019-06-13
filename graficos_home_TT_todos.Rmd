@@ -25,7 +25,7 @@ tema <- function(){
     theme_minimal() +
     theme(
       text = element_text(family = "Open Sans", colour = "grey20"),
-      axis.text = element_text(family = "Open Sans", colour = "grey20", size = 16),
+      axis.text = element_text(family = "Open Sans Condensed", colour = "grey20", size = 16),
       title = element_text(face = "bold"), # size para o Shiny
       plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 20, color = "#1E4C7A"),
       plot.caption = element_text(face = "italic"),
@@ -142,8 +142,8 @@ diminuir width!
 
 ```{r}
 gif_linhas <- grafico_linha +
-  transition_reveal(Periodo) 
-# labs(subtitle = "{frame_along}") 
+  transition_reveal(Periodo) +
+  labs(subtitle = paste("Últimos 12 meses, atualizados pelo IPCA, até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 
 animate(gif_linhas, type = "cairo", nframes = nrow(serie)/2, height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
@@ -156,9 +156,9 @@ anim_save("hom_TT_rtn.gif", animation = last_animation())
 ## Dados do estoque da dívida
 
 ```{r}
-# recurso_dpf_TT <- resource_show(id="0402cb77-5e4c-4414-966f-0e87d802a29a",
-#                              url="https://apickan.tesouro.gov.br/ckan")
-# download.file(recurso_dpf_TT$url, destfile = "./dpf.xlsx", mode = 'wb' )
+recurso_dpf_TT <- resource_show(id="0402cb77-5e4c-4414-966f-0e87d802a29a",
+                              url="https://apickan.tesouro.gov.br/ckan")
+download.file(recurso_dpf_TT$url, destfile = "./dpf.xlsx", mode = 'wb' )
 tabela_div <- read_excel("dpf.xlsx", skip = 4)
 ```
 
@@ -241,7 +241,7 @@ Animando
 ```{r}
 gif_linhas_dpf <- grafico_linha_dpf +
   transition_reveal(1, Periodo) 
-#  labs(subtitle = "{frame_along}") 
+ labs(subtitle = "{frame_along}") 
 
 animate(gif_linhas_dpf, nframes = nrow(dpf)/2, height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
