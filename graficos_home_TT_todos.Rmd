@@ -141,14 +141,9 @@ grafico_linha <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado
 diminuir width!
 
 ```{r}
-gif_linhas <- grafico_linha + 
-    transition_states(Periodo,
-                    transition_length = 2,
-                    state_length = 1) 
-
 gif_linhas <- grafico_linha +
   transition_reveal(Periodo) 
-#  labs(subtitle = "{frame_along}") 
+# labs(subtitle = "{frame_along}") 
 
 animate(gif_linhas, type = "cairo", nframes = nrow(serie)/2, height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
