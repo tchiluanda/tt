@@ -1,7 +1,6 @@
 ---
-title: "Resultado Primario"
+title: "Gráficos da Home do TT"
 author: "tiago"
-date: "4 de dezembro de 2018"
 output: html_document
 ---
 
@@ -20,6 +19,7 @@ library(gganimate)
 library(RColorBrewer)
 library(ckanr)
 library(zoo)
+library(transformr)
 
 tema <- function(){
     theme_minimal() +
@@ -45,9 +45,9 @@ tema <- function(){
 ## Resultado primário
 
 ```{r importa, echo=FALSE}
-# recurso_TT <- resource_show(id="527ccdb1-3059-42f3-bf23-b5e3ab4c6dc6",
-#                             url="https://apickan.tesouro.gov.br/ckan")
-# download.file(recurso_TT$url, destfile = "./rtn.xlsx", mode = 'wb' )
+recurso_TT <- resource_show(id="527ccdb1-3059-42f3-bf23-b5e3ab4c6dc6",
+                             url="https://apickan.tesouro.gov.br/ckan")
+download.file(recurso_TT$url, destfile = "./rtn.xlsx", mode = 'wb' )
 tabela <- read_excel("rtn.xlsx", sheet = "1.1-A", skip = 4)
 ```
 
@@ -141,11 +141,16 @@ grafico_linha <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado
 diminuir width!
 
 ```{r}
+gif_linhas <- grafico_linha + 
+    transition_states(Periodo,
+                    transition_length = 2,
+                    state_length = 1) 
+
 gif_linhas <- grafico_linha +
-  transition_reveal(1, Periodo) 
+  transition_reveal(Periodo) 
 #  labs(subtitle = "{frame_along}") 
 
-animate(gif_linhas, nframes = nrow(serie)/2, height = 488, width = 668,
+animate(gif_linhas, type = "cairo", nframes = nrow(serie)/2, height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
 
 
