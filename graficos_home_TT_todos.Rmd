@@ -250,6 +250,58 @@ animate(gif_linhas_dpf, type = "cairo", nframes = nrow(dpf)/2, height = 488, wid
 anim_save("home_TT_dpf_escala_com_cairo.gif", animation = last_animation())
 ```
 
+## Despesas RTN
+
+### Lê a planilha
+```{r}
+tabela_desp <- read_excel("rtn.xlsx", sheet = "1.4-A", skip = 4)
+```
+
+
+```{r}
+
+tabela_desp2 <- tabela_desp %>%
+  rename(rotulos = 1) %>%
+  filter(str_sub(rotulos,1,2) == "IV") %>%
+  mutate_at(-1, .funs = ~as.numeric(.)) %>%
+  mutate(total = rowSums(.[-1])) %>%
+  select(rotulos, total) %>%
+  arrange(desc(total)) %>%
+  filter(!is.na(total)) %>%
+  mutate(class = str_extract(tabela_desp2$rotulos, "IV[\\.\\d]{1,}"),
+         qde_niveis = str_count(class, "\\.")) %>%
+  separate(class, 
+           into = paste("Nivel", 
+                        1:max(.$qde_niveis), 
+                        sep = "_"),
+           sep = "\\.",
+           remove = FALSE)
+
+
+%>%
+  separate(class, sep = "\\.")
+
+ggplot(tabela_desp2, aes(y = total, x = rotulos)) +
+  geom_col() +
+  coord_flip()
+
+serie_desp <- tabela_desp %>% 
+  rename(rotulos = 1) %>%
+  gather(-1, key = "Periodo", value = "Valor") %>%
+  mutate(Valor = as.numeric(Valor),
+         Periodo = as.Date(as.numeric(Periodo), origin = "1899-12-30"),
+         data = paste0(lubridate::year(Periodo), "/", 
+                       stringr::str_pad(lubridate::month(Periodo), width = 2, pad = "0"))) %>%
+  select(-Periodo) %>%
+  spread(key = data, value = Valor)
+  
+  filter(!is.na(Valor_12m)) %>%
+  filter(Periodo >= "2006-01-01") # para ficar igual à série da dívida
+```
+
+
+
+
 ## Despesas União
 
 ```{r tg_para_csv}
