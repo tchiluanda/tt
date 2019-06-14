@@ -269,10 +269,20 @@ tabela_desp2 <- tabela_desp %>%
   arrange(desc(total)) %>%
   filter(!is.na(total)) %>%
   mutate(class = str_extract(tabela_desp2$rotulos, "IV[\\.\\d]{1,}"),
-         qde_niveis = str_count(class, "\\.")) %>%
+         nivel = ifelse(str_sub(class, -1, -1) == ".", 
+                             1,
+                             str_count(class, "\\.") + 1),
+         ult_nivel = ifelse(nivel == 1,
+                            "Agregadora",
+                            ifelse(str_detect(class,
+                                              paste0(class,".")),
+                                   "Agregadora",
+                                   "Ultimo_nivel")
+                            )
+         ) %>%
   separate(class, 
            into = paste("Nivel", 
-                        1:max(.$qde_niveis), 
+                        1:max(.$nivel), 
                         sep = "_"),
            sep = "\\.",
            remove = FALSE)
