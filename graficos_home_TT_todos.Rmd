@@ -266,32 +266,30 @@ tabela_desp2 <- tabela_desp %>%
   mutate_at(-1, .funs = ~as.numeric(.)) %>%
   mutate(total = rowSums(.[-1])) %>%
   select(rotulos, total) %>%
-  arrange(desc(total)) %>%
+  #arrange(desc(total)) %>%
   filter(!is.na(total)) %>%
   mutate(class = str_extract(tabela_desp2$rotulos, "IV[\\.\\d]{1,}"),
          nivel = ifelse(str_sub(class, -1, -1) == ".", 
                              1,
-                             str_count(class, "\\.") + 1),
-         ult_nivel = ifelse(nivel == 1,
-                            "Agregadora",
-                            ifelse(str_detect(class,
-                                              paste0(class,".")),
-                                   "Agregadora",
-                                   "Ultimo_nivel")
-                            )
+                             str_count(class, "\\.") + 1)
          ) %>%
   separate(class, 
            into = paste("Nivel", 
                         1:max(.$nivel), 
                         sep = "_"),
            sep = "\\.",
-           remove = FALSE)
+           remove = FALSE) %>%
+  rowwise() %>%
+  mutate(ultimo_nivel = ifelse(str_sub(class, -1, -1) == ".",
+                               "Agregadora",
+                               ifelse(sum(str_count(.$class, 
+                                                    paste0(class,"\\."))) > 0,
+                                      "Agregadora",
+                                      "Ult_nivel")))
 
+# caraca, suei pra fazer esse pipe... documentar!
 
-%>%
-  separate(class, sep = "\\.")
-
-ggplot(tabela_desp2, aes(y = total, x = rotulos)) +
+plot1 <- ggplot(tabela_desp2 %>% filter(ultimo_nivel == "Ult_nivel"), aes(y = total, x = reorder(rotulos, total))) +
   geom_col() +
   coord_flip()
 
