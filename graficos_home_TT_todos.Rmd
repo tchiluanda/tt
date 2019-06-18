@@ -13,7 +13,6 @@ library(tidyverse)
 library(readxl)
 library(scales)
 library(ggrepel)
-library(ipeaData)
 library(extrafont)
 library(gganimate)
 library(RColorBrewer)
@@ -250,163 +249,66 @@ animate(gif_linhas_dpf, type = "cairo", nframes = nrow(dpf)/2, height = 488, wid
 anim_save("home_TT_dpf_escala_com_cairo.gif", animation = last_animation())
 ```
 
-## Despesas RTN
-
-### Lê a planilha
-```{r}
-tabela_desp <- read_excel("rtn.xlsx", sheet = "1.4-A", skip = 4)
-```
-
-### Processa e plota os valores totais
-
-```{r}
-
-tabela_desp2 <- tabela_desp %>%
-  rename(rotulos = 1) %>%
-  filter(str_sub(rotulos,1,2) == "IV") %>%
-  mutate_at(-1, .funs = ~as.numeric(.)) %>%
-  mutate(total = rowSums(.[-1])) %>%
-  select(rotulos, total) %>%
-  #arrange(desc(total)) %>%
-  filter(!is.na(total)) %>%
-  mutate(class = str_extract(tabela_desp2$rotulos, "IV[\\.\\d]{1,}"),
-         nivel = ifelse(str_sub(class, -1, -1) == ".", 
-                             1,
-                             str_count(class, "\\.") + 1)
-         ) %>%
-  separate(class, 
-           into = paste("Nivel", 
-                        1:max(.$nivel), 
-                        sep = "_"),
-           sep = "\\.",
-           remove = FALSE) %>%
-  rowwise() %>%
-  mutate(ultimo_nivel = ifelse(str_sub(class, -1, -1) == ".",
-                               "Agregadora",
-                               ifelse(sum(str_count(.$class, 
-                                                    paste0(class,"\\."))) > 0,
-                                      "Agregadora",
-                                      "Ult_nivel")))
-
-# caraca, suei pra fazer esse pipe... documentar!
-
-plot1 <- ggplot(tabela_desp2 %>% filter(ultimo_nivel == "Ult_nivel"), aes(y = total, x = reorder(rotulos, total))) +
-  geom_col() +
-  coord_flip()
-
-# conclusão: essa classificação é muito limitada. :/
-
-serie_desp <- tabela_desp %>% 
-  rename(rotulos = 1) %>%
-  gather(-1, key = "Periodo", value = "Valor") %>%
-  mutate(Valor = as.numeric(Valor),
-         Periodo = as.Date(as.numeric(Periodo), origin = "1899-12-30"),
-         data = paste0(lubridate::year(Periodo), "/", 
-                       stringr::str_pad(lubridate::month(Periodo), width = 2, pad = "0"))) %>%
-  select(-Periodo) %>%
-  spread(key = data, value = Valor)
-  
-  filter(!is.na(Valor_12m)) %>%
-  filter(Periodo >= "2006-01-01") # para ficar igual à série da dívida
-```
-
 ## Despesas União
 
+Carga dos dados a partir do ckan
+
 ```{r tg_para_csv}
-# lê os CSV
-dados_desp_RGPS <- read.csv2("../base-siafi-tt/dados/base_Siafi_soRGPS.csv")
-dados_desp_nRGPS <- read.csv2("../base-siafi-tt/dados/base_Siafi_exRGPS.csv")
+# lê o arquivo do ckan
+# recurso_TT_desp <- resource_show(id="1043f379-e7fb-4c18-be52-345b8672ccfb",
+#                              url="https://apickan.tesouro.gov.br/ckan")
+# download.file(recurso_TT_desp$url, destfile = "./desp_uniao.xlsx", mode = 'wb' )
+# desp_uniao <- read_excel("desp_uniao.xlsx")
+# save(desp_uniao, file = "desp_uniao.RData")
 
-# cria classificador para indicar se a despesa é ou não do RGPS
-dados_desp_nRGPS$RGPS <- FALSE
-dados_desp_RGPS$RGPS  <- TRUE
-
-# junta as duas tabelas
-dados_desp <- rbind(dados_desp_nRGPS, dados_desp_RGPS)
-
-# liberando um pouco de recursos
-dados_desp_nRGPS <- NULL
-dados_desp_RGPS <- NULL
-
-# arrumando um pouco
-colnames(dados_desp) <- c("Esfera_cod",
-                          "Esfera_nome",
-                          "Funcao_cod",
-                          "Funcao_nome",
-                          "Subfuncao_cod",
-                          "Subfuncao_nome",
-                          "Programa_cod",
-                          "Programa_nome",
-                          "Acao_cod",
-                          "Acao_nome",
-                          "GND_cod",
-                          "GND_nome",
-                          "Modalidade_id",
-                          "Modalidade_cod",
-                          "Modalidade_nome",
-                          "Elemento_id",
-                          "Elemento_cod",
-                          "Elemento_nome",
-                          "Fonte_id",
-                          "Fonte_cod",
-                          "Fonte_nome",
-                          "ResultadoPrim_cod",
-                          "ResultadoPrim_nome",
-                          "ExcecaoProgFin_cod",
-                          "Ano",
-                          "Mes",
-                          "Periodo",
-                          "ItemInfo_id",
-                          "ItemInfo_nome",
-                          "ItemInfo_cod",
-                          "SaldoAnterior",
-                          "SaldoAtual",
-                          "DespesaRGPS")
-
-dados <- dados_desp %>%
-  filter(!(Mes %in% c(13, 14))) %>%
-  mutate(Periodo = as.Date(paste0(Ano, "-",
-                                  str_pad(Mes, width = 2, pad = "0"), "-",
-                                  "01")),
-         SaldoAnterior = as.numeric(as.character(SaldoAnterior)),
-         SaldoAtual = as.numeric(as.character(SaldoAtual))) %>%
-  replace_na(list(SaldoAnterior = 0, SaldoAtual = 0)) %>%
-  mutate(Valor = round(SaldoAtual - SaldoAnterior, 2)) %>%
-  filter(!(Funcao_cod %in% c("-7","-9")) & 
-         !(GND_cod %in% c("-7","-9")) &
-         !(Modalidade_cod %in% c("-7","-9"))) %>%
-  select(-SaldoAtual, -SaldoAnterior, -ends_with("_id"))
-
-dados_desp %>% 
-  write.csv2("./dados/despUniao.csv", row.names = FALSE)
-
-
+load("desp_uniao.RData")
 ```
-
-Verifica totais
-
-```{r}
-dados_desp %>%
-  group_by(Ano) %>%
-  summarise(total = sum(Valor))
-```
-
 
 Tratamento dos dados
 
 ```{r}
+# classificadores do rpps
+# atencao: esses agrupamentos de ações e subfunções não devem ser levados em consideração isoladamente, mas sim combinados com outros critérios. vide "case_when" mais abaixo.
 
-dados_desp_plot <- dados_desp %>%
+acoes_rpps_civil <- c("0053", "0054", "0055", "009K", "0181", "0397")
+acoes_rpps_militar <- c("0179")
+acoes_rpps_fcdf <- c("00Q2", "00QD", "00QN", "009T")
+acoes_rpps_demais_desp <- c("0005", "0041", "00F1", "00F2", "00NS", "0536", "0739", "0C01")
+acoes_rpps_acoes_antigas <- c("0396", "0436", "0C00")
+acoes_rpps_seguridade <- c(acoes_rpps_civil, acoes_rpps_militar, acoes_rpps_fcdf, acoes_rpps_demais_desp, acoes_rpps_acoes_antigas)
+
+acoes_rpps_militar_esf_fiscal <- c("214H", "218K")
+
+subfuncoes_rpps <- c("272", "273", "274", "845", "846")
+
+desp <- desp_uniao %>%
   mutate(classificador = case_when(
-    Previdencia == TRUE ~ "Benefícios RGPS",
-    GND_cod == "1" ~ "Pessoal",
+    DespesaRGPS == TRUE ~ "Benefícios RGPS",
     GND_cod %in% c("4", "5") ~ "Investimentos",
     GND_cod %in% c("2", "6") ~ "Dívida",
     GND_cod == "3" & Funcao_cod == "10" ~ "Custeio Saúde",
     GND_cod == "3" & Funcao_cod == "12" ~ "Custeio Educação",
     GND_cod == "3" & Funcao_cod %in% c("08", "11") ~ "Custeio Social",
     GND_cod == "3" & as.numeric(Modalidade_cod) %in% 30:49 ~ "Outras Transferências",
-    GND_cod == "3" ~ "Custeio Administrativo")) %>%
+    GND_cod == "3" ~ "Custeio Administrativo",
+    GND_cod == "1" & 
+      (
+        (Esfera_cod == "2" & 
+         Subfuncao_cod %in% subfuncoes_rpps &
+         Acao_cod %in% acoes_rpps_seguridade) 
+        |
+        (Esfera_cod == "1" &
+         Acao_cod %in% acoes_rpps_militar_esf_fiscal)
+      ) ~ "Benefícios RPPS",
+    GND_cod == "1" ~ "Pessoal (ativo)")) %>%
+  group_by(Ano, classificador) %>%
+  summarise(Valor = sum(Valor))
+
+ggplot(desp %>% filter(Ano != "2019", !classificador %in% c("Dívida", "Outras Transferências")), aes(x = Ano, y = Valor, color = classificador)) + geom_line(aes(group = classificador))
+
+      
+desp %>% spread(key = "Ano", value = "Valor")
+
   group_by(Periodo, classificador) %>%
   summarise(Valor = sum(Valor)) %>%
   ungroup() %>%
