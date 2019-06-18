@@ -257,6 +257,7 @@ anim_save("home_TT_dpf_escala_com_cairo.gif", animation = last_animation())
 tabela_desp <- read_excel("rtn.xlsx", sheet = "1.4-A", skip = 4)
 ```
 
+### Processa e plota os valores totais
 
 ```{r}
 
@@ -293,6 +294,8 @@ plot1 <- ggplot(tabela_desp2 %>% filter(ultimo_nivel == "Ult_nivel"), aes(y = to
   geom_col() +
   coord_flip()
 
+# conclusão: essa classificação é muito limitada. :/
+
 serie_desp <- tabela_desp %>% 
   rename(rotulos = 1) %>%
   gather(-1, key = "Periodo", value = "Valor") %>%
@@ -307,41 +310,72 @@ serie_desp <- tabela_desp %>%
   filter(Periodo >= "2006-01-01") # para ficar igual à série da dívida
 ```
 
-
-
-
 ## Despesas União
 
 ```{r tg_para_csv}
-dados_desp_RGPS <- read_excel("./dados/despesas2008_2018_apenasRGPS.xlsx", skip = 9)
-dados_desp_nRGPS <- read_excel("./dados/despesas2008_2018_excetoRGPS.xlsx", skip = 9)
+# lê os CSV
+dados_desp_RGPS <- read.csv2("../base-siafi-tt/dados/base_Siafi_soRGPS.csv")
+dados_desp_nRGPS <- read.csv2("../base-siafi-tt/dados/base_Siafi_exRGPS.csv")
 
+# cria classificador para indicar se a despesa é ou não do RGPS
 dados_desp_nRGPS$RGPS <- FALSE
 dados_desp_RGPS$RGPS  <- TRUE
 
+# junta as duas tabelas
 dados_desp <- rbind(dados_desp_nRGPS, dados_desp_RGPS)
 
-colnames(dados_desp) <- c("Funcao_cod",
+# liberando um pouco de recursos
+dados_desp_nRGPS <- NULL
+dados_desp_RGPS <- NULL
+
+# arrumando um pouco
+colnames(dados_desp) <- c("Esfera_cod",
+                          "Esfera_nome",
+                          "Funcao_cod",
                           "Funcao_nome",
+                          "Subfuncao_cod",
+                          "Subfuncao_nome",
+                          "Programa_cod",
+                          "Programa_nome",
+                          "Acao_cod",
+                          "Acao_nome",
                           "GND_cod",
                           "GND_nome",
+                          "Modalidade_id",
                           "Modalidade_cod",
                           "Modalidade_nome",
-                          "Periodo_Siafi",
+                          "Elemento_id",
+                          "Elemento_cod",
+                          "Elemento_nome",
+                          "Fonte_id",
+                          "Fonte_cod",
+                          "Fonte_nome",
+                          "ResultadoPrim_cod",
+                          "ResultadoPrim_nome",
+                          "ExcecaoProgFin_cod",
                           "Ano",
-                          "Mes_num",
-                          "Valor",
-                          "Previdencia")
+                          "Mes",
+                          "Periodo",
+                          "ItemInfo_id",
+                          "ItemInfo_nome",
+                          "ItemInfo_cod",
+                          "SaldoAnterior",
+                          "SaldoAtual",
+                          "DespesaRGPS")
 
-dados_desp <- dados_desp %>%
-  filter(!(Mes_num %in% c("13", "14"))) %>%
+dados <- dados_desp %>%
+  filter(!(Mes %in% c(13, 14))) %>%
   mutate(Periodo = as.Date(paste0(Ano, "-",
-                                  if_else(Mes_num < 10, "0", ""), Mes_num, "-",
+                                  str_pad(Mes, width = 2, pad = "0"), "-",
                                   "01")),
-         Valor = round(Valor, 2)) %>%
+         SaldoAnterior = as.numeric(as.character(SaldoAnterior)),
+         SaldoAtual = as.numeric(as.character(SaldoAtual))) %>%
+  replace_na(list(SaldoAnterior = 0, SaldoAtual = 0)) %>%
+  mutate(Valor = round(SaldoAtual - SaldoAnterior, 2)) %>%
   filter(!(Funcao_cod %in% c("-7","-9")) & 
-     !(GND_cod %in% c("-7","-9")) &
-     !(Modalidade_cod %in% c("-7","-9")))
+         !(GND_cod %in% c("-7","-9")) &
+         !(Modalidade_cod %in% c("-7","-9"))) %>%
+  select(-SaldoAtual, -SaldoAnterior, -ends_with("_id"))
 
 dados_desp %>% 
   write.csv2("./dados/despUniao.csv", row.names = FALSE)
