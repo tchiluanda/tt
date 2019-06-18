@@ -135,8 +135,8 @@ dados <- base_completa %>%
          !(Modalidade_cod %in% c("-7","-9")))
 
 
-dados %>% 
-  write.csv2("despesas_uniao.csv", row.names = FALSE)
+# dados %>% 
+#   write.csv2("despesas_uniao.csv", row.names = FALSE)
 
 dados %>%
   write_xlsx("despesa_uniao.xlsx")
