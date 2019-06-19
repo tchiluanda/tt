@@ -360,7 +360,7 @@ Paleta TT
 
 ```{r}
 cores_temas_TT <- c("#643275", "#e59405", "#03859a", "#1f476a", "#709a2d", "#ba3917")
-paleta <- c(cores_temas_TT, brewer.pal(8, "Dark2")[8])
+paleta <- c(cores_temas_TT, brewer.pal(8, "Dark2")[7:8])
 ```
 
 
@@ -376,15 +376,6 @@ ultimo_periodo <- max(desp_12m_ipca$Periodo)
 
 graf_linhas_desp <- ggplot(desp_12m_ipca, aes(x = Periodo, y = Valor_12m_ipca, group = classificador, color = classificador)) +
   geom_line(size = 1) +
-  geom_segment(aes(xend = ultimo_periodo, yend = Valor_12m_ipca), linetype = 2) +
-  geom_point(size = 3) +
-  geom_text(aes(x = max(dados_desp_plot$Periodo) + 50,
-                label = paste(round(Valor_12m_ipca, 0), classificador_sem_acento),
-                y = ifelse(Periodo < ultimo_periodo,
-                           Valor_12m_ipca,
-                           Valor_12m_ipca + c(0, 20, 0, -24, 20, -7, 0))), 
-            hjust = 0, family = "Open Sans",
-            size = 8) + #não tinha definido
   scale_x_date(breaks = janeiros,
               #date_breaks = "1 years", 
                labels = anos,
@@ -403,6 +394,17 @@ graf_linhas_desp <- ggplot(desp_12m_ipca, aes(x = Periodo, y = Valor_12m_ipca, g
                     axis.ticks.y = element_blank(),
                     axis.title.y = element_blank(),
                     plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2))
+
+graf_desp_para_gif <- graf_linhas_desp +
+  geom_segment(aes(xend = ultimo_periodo, yend = Valor_12m_ipca), linetype = 2) +
+  geom_point(size = 3) +
+  geom_text(aes(x = ultimo_periodo + 50,
+                label = paste(round(Valor_12m_ipca, 0), classificador),
+                y = ifelse(Periodo < ultimo_periodo,
+                           Valor_12m_ipca,
+                           Valor_12m_ipca + c(0, 20, 0, -24, 20, -7, 0))), 
+            hjust = 0, family = "Open Sans Condensed",
+            size = 8) #não tinha definido
 
 # aqui tinha um problema. com o expand tão grande, a escala continuava até sei lá quanto (2025, acho). para resolver isso tentei usar o `limits`. Não resolveu. aí resolvi setar mais ou menos manualmente, bom breaks e labels no lugar de date_breaks e date_labels. Mas eu tinha deixado o limits, então o geom_text não estava sendo escrito, pq ficou fora do limite.
 
