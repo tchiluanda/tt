@@ -389,7 +389,7 @@ graf_linhas_desp <- ggplot(desp_12m_ipca, aes(x = Periodo, y = Valor_12m_ipca, g
   ) +
   tema() + 
   theme(legend.position = 'none') +
-  theme(axis.text = element_text(size = 14, family = "Open Sans"), # era 10
+  theme(axis.text = element_text(size = 14, family = "Open Sans Condensed Light"), # era 10
                     axis.text.y = element_blank(),
                     axis.ticks.y = element_blank(),
                     axis.title.y = element_blank(),
@@ -436,5 +436,62 @@ animate(gif_linhas_desp, type = "cairo", nframes = nrow(ipca)/2, height = 488, w
 
 ```{r}
 anim_save("home_TT_despesas.gif", animation = last_animation())
+```
+
+## Gráfico de barras
+
+```{r}
+
+# ajeitar cores
+
+ultimo_mes <- lubridate::month(ultimo_periodo)
+
+desp_bar <- desp_12m_ipca %>%
+  mutate(mes = lubridate::month(Periodo),
+         ano = lubridate::year(Periodo),
+         valor_texto = as.character(round(Valor_12m_ipca, 0))) %>%
+  filter(mes == ultimo_mes) %>%
+  group_by(ano) %>%
+  mutate(rank = rank(-Valor_12m_ipca))
+
+desp_bar_estatico <- ggplot(desp_bar, 
+                            aes(y = Valor_12m_ipca, 
+                                x = rank, 
+                                fill = classificador,
+                                color = classificador)) +
+  geom_bar(width = 0.7, stat = 'identity') +
+  geom_text(aes(y = Valor_12m_ipca + 15, 
+                label = valor_texto), # color = CoresEscuras
+            position = position_dodge(1),
+            size = 5, family = "Open Sans Condensed", vjust = 'center') +  
+  geom_text(aes(y=0, label = paste(classificador, " ")), 
+            vjust = 0.2, hjust = 1, check_overlap = TRUE, family = "Open Sans", size = 4) +
+  coord_flip(clip = "off", expand = FALSE) +
+  scale_y_continuous(labels = percent) + #, expand = expand_scale(add = c(0.2,0) 
+  scale_x_reverse() +
+  scale_color_manual(values = paleta) +
+  scale_fill_manual(values = paleta) +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = NULL
+  ) +
+  tema() +
+  theme(legend.position = 'none') + theme(axis.ticks.y = element_blank(),
+                                          axis.ticks.x = element_blank(),
+                                          axis.text.x  = element_blank(),
+                                          axis.text.y  = element_blank(),
+                                          plot.margin = margin(1, 2, 0, 4.5, "cm"))
+
+desp_bar_anim <- desp_bar_estatico + 
+  transition_states(Periodo, transition_length = 1, state_length = 2) +
+  labs(title = 'Despesas da União: últimos 12 meses até {meses[ultimo_mes]}',
+       subtitle = '{lubridate::year(closest_state)}') +
+  ease_aes('sine-in-out')
+
+animate(desp_bar_anim, type = "cairo", nframes = 132, width = 668, height = 488, 
+        renderer = gifski_renderer()) 
+
+\anim_save("despesas_bar.gif", animation = last_animation())
 ```
 
