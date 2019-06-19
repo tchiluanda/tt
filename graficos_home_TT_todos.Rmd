@@ -300,21 +300,24 @@ desp <- desp_uniao %>%
         (Esfera_cod == "1" &
          Acao_cod %in% acoes_rpps_militar_esf_fiscal)
       ) ~ "Benefícios RPPS",
-    GND_cod == "1" ~ "Pessoal (ativo)")) %>%
-  group_by(Ano, classificador) %>%
-  summarise(Valor = sum(Valor))
+    GND_cod == "1" ~ "Pessoal (ativo)"))
 
-ggplot(desp %>% filter(Ano != "2019", !classificador %in% c("Dívida", "Outras Transferências")), aes(x = Ano, y = Valor, color = classificador)) + geom_line(aes(group = classificador))
+desp %>%  
+  group_by(Ano, classificador) %>%
+  summarise(Valor = sum(Valor)) %>%
+  filter(Ano != "2019", !classificador %in% c("Dívida", "Outras Transferências")) %>%
+  ggplot(aes(x = Ano, y = Valor, color = classificador)) + 
+  geom_line(aes(group = classificador))
 
       
-desp %>% spread(key = "Ano", value = "Valor")
-
+desp_12m_ipca <- desp %>%
   group_by(Periodo, classificador) %>%
   summarise(Valor = sum(Valor)) %>%
   ungroup() %>%
   spread(classificador, Valor) %>%
   mutate_at(-1, funs(zoo::rollapply(., width = 12, FUN = sum, fill = NA, align = 'right'))) %>% 
   gather(-1, key = "classificador", value = "Valor_12m") %>%
+  mutate(Periodo = as.Date(Periodo)) %>%
   left_join(ipca) %>%
   mutate(Valor_12m_ipca = Valor_12m * IPCA / 1e9) %>%
   filter(!is.na(Valor_12m_ipca)) %>%
@@ -334,7 +337,6 @@ dados_desp_plot %>%
 ```
 
 Bixiga de enconding
-
 
 ```{r}
 Encoding(dados_desp_plot$classificador) <- "UTF-8"
@@ -365,12 +367,14 @@ paleta <- c(cores_temas_TT, brewer.pal(8, "Dark2")[8])
 
 ```{r}
 
-janeiros <- unique(dados_desp_plot$Periodo[str_detect(dados_desp_plot$Periodo, "-01-01")])
+janeiros <- unique(desp_12m_ipca$Periodo[str_detect(desp_12m_ipca$Periodo, "-01-01")])
+
 anos <- lubridate::year(janeiros)
-ultimo_periodo <- max(dados_desp_plot$Periodo)
+
+ultimo_periodo <- max(desp_12m_ipca$Periodo)
 # dados_desp_plot$posicoes_finais_rotulos <- c(rep(0, nrow(dados_desp_plot) - 7), c(0, 20, 0, -20, 20, 0, 0)) + dados_desp_plot$Valor_12m_ipca
 
-graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca, group = classificador, color = classificador)) +
+graf_linhas_desp <- ggplot(desp_12m_ipca, aes(x = Periodo, y = Valor_12m_ipca, group = classificador, color = classificador)) +
   geom_line(size = 1) +
   geom_segment(aes(xend = ultimo_periodo, yend = Valor_12m_ipca), linetype = 2) +
   geom_point(size = 3) +
