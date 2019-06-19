@@ -32,32 +32,32 @@ arq_fechado_apenas_RGPS  <- arquivos_apenas_RGPS[!vetor_pos_soRGPS]
 
 # gerando as bases fechadas -----------------------------------------------
 
-#=========================================================================#
-# só precisa fazer uma vez                                                #
-#=========================================================================#
-
-base_fechada_ex_RGPS <- purrr::map(.x = arq_fechado_exceto_RGPS, .f = read_excel, skip = 9) %>%
-  bind_rows()
-
-base_fechada_so_RGPS <- purrr::map(.x = arq_fechado_apenas_RGPS, .f = read_excel, skip = 9) %>%
-  bind_rows()
-
-# cria classificador para indicar se a despesa é ou não do RGPS
-base_fechada_ex_RGPS$RGPS <- FALSE
-base_fechada_so_RGPS$RGPS  <- TRUE
-
-# junta as duas tabelas
-base_fechada <- bind_rows(base_fechada_ex_RGPS, base_fechada_so_RGPS)
-
-# liberando um pouco de recursos
-base_fechada_so_RGPS <- NULL
-base_fechada_ex_RGPS <- NULL
-
-save(base_fechada, file = "base_fechada.RData")
-
-#=========================================================================#
-# com sorte, não precisa mais fazer esse pedaço de cima.                  #
-#=========================================================================#
+# #=========================================================================#
+# # só precisa fazer uma vez                                                #
+# #=========================================================================#
+# 
+# base_fechada_ex_RGPS <- purrr::map(.x = arq_fechado_exceto_RGPS, .f = read_excel, skip = 9) %>%
+#   bind_rows()
+# 
+# base_fechada_so_RGPS <- purrr::map(.x = arq_fechado_apenas_RGPS, .f = read_excel, skip = 9) %>%
+#   bind_rows()
+# 
+# # cria classificador para indicar se a despesa é ou não do RGPS
+# base_fechada_ex_RGPS$RGPS <- FALSE
+# base_fechada_so_RGPS$RGPS  <- TRUE
+# 
+# # junta as duas tabelas
+# base_fechada <- bind_rows(base_fechada_ex_RGPS, base_fechada_so_RGPS)
+# 
+# # liberando um pouco de recursos
+# base_fechada_so_RGPS <- NULL
+# base_fechada_ex_RGPS <- NULL
+# 
+# save(base_fechada, file = "base_fechada.RData")
+# 
+# #=========================================================================#
+# # com sorte, não precisa mais fazer esse pedaço de cima.                  #
+# #=========================================================================#
 
 
 # incorporando a base do ano ----------------------------------------------
@@ -137,6 +137,8 @@ dados <- base_completa %>%
 
 # dados %>% 
 #   write.csv2("despesas_uniao.csv", row.names = FALSE)
+
+save(dados, file = "despesa_uniao.RData")
 
 dados %>%
   write_xlsx("despesa_uniao.xlsx")
