@@ -254,13 +254,13 @@ anim_save("home_TT_dpf_escala_com_cairo.gif", animation = last_animation())
 Carga dos dados a partir do ckan
 
 ```{r tg_para_csv}
-# lê o arquivo do ckan
+# # lê o arquivo do ckan
 # recurso_TT_desp <- resource_show(id="1043f379-e7fb-4c18-be52-345b8672ccfb",
 #                              url="https://apickan.tesouro.gov.br/ckan")
 # download.file(recurso_TT_desp$url, destfile = "./desp_uniao.xlsx", mode = 'wb' )
 # desp_uniao <- read_excel("desp_uniao.xlsx")
 # save(desp_uniao, file = "desp_uniao.RData")
-
+# 
 load("desp_uniao.RData")
 ```
 
@@ -302,12 +302,14 @@ desp <- desp_uniao %>%
       ) ~ "Benefícios RPPS",
     GND_cod == "1" ~ "Pessoal (ativo)"))
 
-desp %>%  
-  group_by(Ano, classificador) %>%
-  summarise(Valor = sum(Valor)) %>%
-  filter(Ano != "2019", !classificador %in% c("Dívida", "Outras Transferências")) %>%
-  ggplot(aes(x = Ano, y = Valor, color = classificador)) + 
-  geom_line(aes(group = classificador))
+# um gráfico inicial para verificação
+
+# desp %>%  
+#   group_by(Ano, classificador) %>%
+#   summarise(Valor = sum(Valor)) %>%
+#   filter(Ano != "2019", !classificador %in% c("Dívida", "Outras Transferências")) %>%
+#   ggplot(aes(x = Ano, y = Valor, color = classificador)) + 
+#   geom_line(aes(group = classificador))
 
       
 desp_12m_ipca <- desp %>%
@@ -324,17 +326,15 @@ desp_12m_ipca <- desp %>%
   filter(!classificador %in% c("Dívida", "Outras Transferências")) %>%
   arrange(Periodo)
 
-```
-
-Verifica total
-
-```{r}
-dados_desp_plot %>%
-  filter(Mes_num == "12") %>%
-  group_by(Ano) %>%
-  summarize(Valor = sum(Valor_12m))
+# # tabelinha pra verificar os totais
+# dados_desp_plot %>%
+#   filter(Mes_num == "12") %>%
+#   group_by(Ano) %>%
+#   summarize(Valor = sum(Valor_12m))
 
 ```
+
+
 
 Bixiga de enconding
 
@@ -389,11 +389,13 @@ graf_linhas_desp <- ggplot(desp_12m_ipca, aes(x = Periodo, y = Valor_12m_ipca, g
   ) +
   tema() + 
   theme(legend.position = 'none') +
-  theme(axis.text = element_text(size = 16, family = "Open Sans"), # era 10
+  theme(axis.text = element_text(size = 14, family = "Open Sans"), # era 10
                     axis.text.y = element_blank(),
                     axis.ticks.y = element_blank(),
                     axis.title.y = element_blank(),
                     plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2))
+
+# aqui tinha um problema. com o expand tão grande, a escala continuava até sei lá quanto (2025, acho). para resolver isso tentei usar o `limits`. Não resolveu. aí resolvi setar mais ou menos manualmente, bom breaks e labels no lugar de date_breaks e date_labels. Mas eu tinha deixado o limits, então o geom_text não estava sendo escrito, pq ficou fora do limite.
 
 graf_desp_para_gif <- graf_linhas_desp +
   geom_segment(aes(xend = ultimo_periodo, yend = Valor_12m_ipca), linetype = 2) +
@@ -402,21 +404,33 @@ graf_desp_para_gif <- graf_linhas_desp +
                 label = paste(round(Valor_12m_ipca, 0), classificador),
                 y = ifelse(Periodo < ultimo_periodo,
                            Valor_12m_ipca,
-                           Valor_12m_ipca + c(0, 20, 0, -24, 20, -7, 0))), 
+                           Valor_12m_ipca + c(0, 19, 7, -15, -32, 33, -12, 30))), 
             hjust = 0, family = "Open Sans Condensed",
             size = 8) #não tinha definido
 
-# aqui tinha um problema. com o expand tão grande, a escala continuava até sei lá quanto (2025, acho). para resolver isso tentei usar o `limits`. Não resolveu. aí resolvi setar mais ou menos manualmente, bom breaks e labels no lugar de date_breaks e date_labels. Mas eu tinha deixado o limits, então o geom_text não estava sendo escrito, pq ficou fora do limite.
+graf_linhas_desp + 
+  geom_point(size = 3, aes(y = ifelse(Periodo == ultimo_periodo, Valor_12m_ipca, NA))) +
+  geom_text(aes(x = ultimo_periodo + 50,
+                label = paste(round(Valor_12m_ipca, 0), classificador),
+                y = ifelse(Periodo < ultimo_periodo,
+                           NA,
+                           Valor_12m_ipca + c(0, 15, 7, -15, -35, 30, -12, 30))), 
+            hjust = 0, family = "Open Sans Condensed",
+            size = 8)
+
+# ordem do vetor de posicionamento: (alfabética)
+# RGPS, RPPS, Administrativo, Educação, Saúde, Social, Investimentos, Pessoal
+
 
 # outro problema: o vetor de posições não estava funcionando pq a tibble estava ordenada por classificador, e não por período.
 ```
 
 ```{r}
-gif_linhas_desp <- graf_linhas_desp +
-  transition_reveal(classificador, Periodo) 
+gif_linhas_desp <- graf_desp_para_gif +
+  transition_reveal(Periodo) 
 # + theme(axis.text = element_text(size = 10, family = "Open Sans")) 
 # 
-animate(gif_linhas_desp, nframes = nrow(dpf)/2, height = 488, width = 668,
+animate(gif_linhas_desp, type = "cairo", nframes = nrow(ipca)/2, height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
 ```
 
