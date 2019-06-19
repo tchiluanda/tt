@@ -492,6 +492,6 @@ desp_bar_anim <- desp_bar_estatico +
 animate(desp_bar_anim, type = "cairo", nframes = 132, width = 668, height = 488, 
         renderer = gifski_renderer()) 
 
-\anim_save("despesas_bar.gif", animation = last_animation())
+anim_save("despesas_bar.gif", animation = last_animation())
 ```
 
