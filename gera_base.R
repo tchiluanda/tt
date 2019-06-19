@@ -59,10 +59,9 @@ arq_fechado_apenas_RGPS  <- arquivos_apenas_RGPS[!vetor_pos_soRGPS]
 # # com sorte, não precisa mais fazer esse pedaço de cima.                  #
 # #=========================================================================#
 
+load("base_fechada.RData")
 
 # incorporando a base do ano ----------------------------------------------
-
-load("base_fechada.RData")
 
 base_atual_ex_RGPS <- read_excel(arq_atual_exceto_RGPS, skip = 9)
 base_atual_so_RGPS <- read_excel(arq_atual_apenas_RGPS, skip = 9)
