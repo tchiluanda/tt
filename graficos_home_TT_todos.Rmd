@@ -19,6 +19,7 @@ library(RColorBrewer)
 library(ckanr)
 library(zoo)
 library(transformr)
+library(viridis)
 
 tema <- function(){
     theme_minimal() +
@@ -359,8 +360,40 @@ Plot
 Paleta TT
 
 ```{r}
-cores_temas_TT <- c("#643275", "#e59405", "#03859a", "#1f476a", "#709a2d", "#ba3917")
-paleta <- c(cores_temas_TT, brewer.pal(8, "Dark2")[7:8])
+# # cores_temas_TT <- c("#643275", "#e59405", "#03859a", "#1f476a", "#709a2d", "#ba3917")
+# cores_TT <- c("#832F11", "#CA4017", "#F8AC08", "#CEC806", "#96C11E", "#028063", 
+# "#149339", "#4E857E", "#08869B", "#1E466A", "#6E287C")
+# cores_temas_TT_pasteis <- c("#D5845E", "#F3987D", "#FECE60", "#F7EC64", "#CED950", "#63BEAF", "#149339", "#CED9D8", "#049DAC", "#7A9CBD", "#BE8EBF")
+# #paleta <- c(cores_temas_TT, brewer.pal(8, "Dark2")[7:8])
+# 
+# qde_class <- length(unique(desp_12m_ipca$classificador))
+# 
+# paleta <- cores_temas_TT_pasteis[1:qde_class]
+# paleta_darker <- cores_TT[1:qde_class]
+
+paleta <- viridis(8)
+paleta <- brewer.pal(8, "Set3")
+
+# ajeitar cores
+
+paleta_rgb <- col2rgb(paleta)
+
+# clareia <- function(pal, n, i, fator){
+#   componente <- round(pal[n,i] * fator, 0)
+#   if (componente > 255) return(255)
+#   else return(componente)
+# }
+
+fator <- 2
+paleta_darker <- NULL
+
+for (i in 1:dim(paleta_rgb)[2] ) {
+  paleta_darker <- c(paleta_darker,
+                     rgb(paleta_rgb[1,i] %/% fator,
+                         paleta_rgb[2,i] %/% fator,
+                         paleta_rgb[3,i] %/% fator, maxColorValue = 255))
+}
+
 ```
 
 
@@ -381,7 +414,7 @@ graf_linhas_desp <- ggplot(desp_12m_ipca, aes(x = Periodo, y = Valor_12m_ipca, g
                labels = anos,
                #date_labels = "%Y",
                expand = expand_scale(mult = c(0, .60))) +
-  scale_color_manual(values = paleta) + #brewer.pal(8, "Dark2")[-6]
+  scale_color_manual(values = paleta) + 
   coord_cartesian(clip = 'off') +
   labs(
     y = NULL,
@@ -442,7 +475,9 @@ anim_save("home_TT_despesas.gif", animation = last_animation())
 
 ```{r}
 
-# ajeitar cores
+
+
+# cria o rank
 
 ultimo_mes <- lubridate::month(ultimo_periodo)
 
@@ -454,14 +489,25 @@ desp_bar <- desp_12m_ipca %>%
   group_by(ano) %>%
   mutate(rank = rank(-Valor_12m_ipca))
 
-desp_bar_estatico <- ggplot(desp_bar, 
+# incorporar cores à tabela
+
+cores <- data.frame(classificador = unique(desp_bar$classificador),
+                    cores_claras = paleta,
+                    cores_escuras = paleta_darker)
+
+desp_bar_cores <- desp_bar %>% left_join(cores)
+
+# faz o plot estático
+
+desp_bar_estatico <- ggplot(desp_bar_cores, 
                             aes(y = Valor_12m_ipca, 
-                                x = rank, 
-                                fill = classificador,
-                                color = classificador)) +
-  geom_bar(width = 0.7, stat = 'identity') +
-  geom_text(aes(y = Valor_12m_ipca + 15, 
-                label = valor_texto), # color = CoresEscuras
+                                x = rank,
+                                fill = cores_claras, #classificador,
+                                color = cores_escuras) #classificador)
+                            ) +
+  geom_bar(width = 0.7, stat = 'identity', color = NA) +
+  geom_text(aes(y = Valor_12m_ipca + 15, #color = cores_escuras,
+                label = valor_texto), 
             position = position_dodge(1),
             size = 5, family = "Open Sans Condensed", vjust = 'center') +  
   geom_text(aes(y=0, label = paste(classificador, " ")), 
@@ -469,8 +515,8 @@ desp_bar_estatico <- ggplot(desp_bar,
   coord_flip(clip = "off", expand = FALSE) +
   scale_y_continuous(labels = percent) + #, expand = expand_scale(add = c(0.2,0) 
   scale_x_reverse() +
-  scale_color_manual(values = paleta) +
-  scale_fill_manual(values = paleta) +
+  scale_color_identity() + #scale_color_manual(values = paleta) +
+  scale_fill_identity() + #scale_fill_manual(values = paleta) +
   labs(
     x = NULL,
     y = NULL,
@@ -485,7 +531,7 @@ desp_bar_estatico <- ggplot(desp_bar,
 
 desp_bar_anim <- desp_bar_estatico + 
   transition_states(Periodo, transition_length = 1, state_length = 2) +
-  labs(title = 'Despesas da União: últimos 12 meses até {meses[ultimo_mes]}',
+  labs(title = 'acumulado em 12 meses até {tolower(meses[ultimo_mes])} de',
        subtitle = '{lubridate::year(closest_state)}') +
   ease_aes('sine-in-out')
 
