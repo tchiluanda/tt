@@ -481,13 +481,26 @@ anim_save("home_TT_despesas.gif", animation = last_animation())
 
 ultimo_mes <- lubridate::month(ultimo_periodo)
 
-desp_bar <- desp_12m_ipca %>%
+desp_bar_prep <- desp_12m_ipca %>%
   mutate(mes = lubridate::month(Periodo),
          ano = lubridate::year(Periodo),
          valor_texto = as.character(round(Valor_12m_ipca, 0))) %>%
   filter(mes == ultimo_mes) %>%
   group_by(ano) %>%
   mutate(rank = rank(-Valor_12m_ipca))
+
+primeiro_ano <- min(desp_bar_prep$ano[1])
+
+primeiros_valores <- desp_bar_prep %>% 
+  filter(ano == primeiro_ano) %>%
+  mutate(primeiro_valor = Valor_12m_ipca) %>%
+  ungroup() %>%
+  select(classificador, primeiro_valor)
+
+desp_bar <- desp_bar_prep %>%
+  left_join(primeiros_valores)
+
+
 
 # incorporar cores à tabela
 
@@ -529,7 +542,16 @@ desp_bar_estatico <- ggplot(desp_bar_cores,
                                           axis.text.y  = element_blank(),
                                           plot.margin = margin(1, 2, 0, 4.5, "cm"))
 
-desp_bar_anim <- desp_bar_estatico + 
+desp_bar_estatico_anot <- desp_bar_estatico +
+  geom_tile(aes(y = primeiro_valor),
+            width = 0.9, height = 0.3,
+            linetype = "dotted") +
+  geom_text(aes(label = ifelse(rank == 1, primeiro_ano, NA),
+                y = primeiro_valor, x = 0.4), 
+            check_overlap = TRUE,
+            family = "Open Sans", size = 3, fontface = "italic")
+
+desp_bar_anim <- desp_bar_estatico_anot + 
   transition_states(Periodo, transition_length = 1, state_length = 2) +
   labs(title = 'acumulado em 12 meses até {tolower(meses[ultimo_mes])} de',
        subtitle = '{lubridate::year(closest_state)}') +
@@ -538,6 +560,6 @@ desp_bar_anim <- desp_bar_estatico +
 animate(desp_bar_anim, type = "cairo", nframes = 132, width = 668, height = 488, 
         renderer = gifski_renderer()) 
 
-anim_save("despesas_bar.gif", animation = last_animation())
+anim_save("despesas_bar3.gif", animation = last_animation())
 ```
 
