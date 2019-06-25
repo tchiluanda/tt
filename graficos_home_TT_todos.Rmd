@@ -265,7 +265,7 @@ Carga dos dados a partir do ckan
 load("desp_uniao.RData")
 ```
 
-Tratamento dos dados
+### Classificação dos dados
 
 ```{r}
 # classificadores do rpps
@@ -335,9 +335,8 @@ desp_12m_ipca <- desp %>%
 
 ```
 
-Plot
 
-Paleta TT
+### Cores
 
 ```{r}
 # # cores_temas_TT <- c("#643275", "#e59405", "#03859a", "#1f476a", "#709a2d", "#ba3917")
@@ -378,7 +377,7 @@ paleta_original <- c("#832F11", "#CA4017", "#F8AC08", "#CEC806", "#96C11E", "#02
 
 ```
 
-
+### Gráfico de linhas
 
 ```{r}
 
@@ -502,12 +501,12 @@ desp_bar_estatico <- ggplot(desp_bar_cores,
                                 color = cores_escuras) #classificador)
                             ) +
   geom_bar(width = 0.7, stat = 'identity', color = NA) +
-  geom_text(aes(y = Valor_12m_ipca + 15, #color = cores_escuras,
+  geom_text(aes(y = Valor_12m_ipca + 18, #color = cores_escuras,
                 label = valor_texto), 
             position = position_dodge(1),
-            size = 5, family = "Open Sans Condensed", vjust = 'center') +  
+            size = 5.5, family = "Open Sans Condensed", vjust = 'center') +  
   geom_text(aes(y=0, label = paste(classificador, " ")), 
-            vjust = 0.2, hjust = 1, check_overlap = TRUE, family = "Open Sans", size = 4) +
+            vjust = 0.2, hjust = 1, check_overlap = TRUE, family = "Open Sans Condensed Light", size = 5.5) +
   coord_flip(clip = "off", expand = FALSE) +
   scale_y_continuous(labels = percent) + #, expand = expand_scale(add = c(0.2,0) 
   scale_x_reverse() +
@@ -523,19 +522,20 @@ desp_bar_estatico <- ggplot(desp_bar_cores,
                                           axis.ticks.x = element_blank(),
                                           axis.text.x  = element_blank(),
                                           axis.text.y  = element_blank(),
-                                          plot.margin = margin(1, 2, 0, 4.5, "cm"))
+                                          plot.margin = margin(1, 0.9, 0, 4.5, "cm")) #t, r, b, l
 
 desp_bar_estatico_anot <- desp_bar_estatico +
   geom_tile(aes(y = primeiro_valor),
-            width = 0.9, height = 0.3,
+            width = 0.9, height = 1,
             linetype = "dotted") +
   geom_text(aes(label = ifelse(rank == 1, primeiro_ano, NA),
                 y = primeiro_valor, x = 0.4), 
             check_overlap = TRUE,
-            family = "Open Sans", size = 3, fontface = "italic")
+            family = "Open Sans", size = 4, fontface = "italic")
 
 desp_bar_anim <- desp_bar_estatico_anot + 
   transition_states(Periodo, transition_length = 1, state_length = 2) +
+  theme(plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2)) +
   labs(title = 'acumulado em 12 meses até {tolower(meses[ultimo_mes])} de',
        subtitle = '{lubridate::year(closest_state)}') +
   ease_aes('sine-in-out')
@@ -543,6 +543,7 @@ desp_bar_anim <- desp_bar_estatico_anot +
 animate(desp_bar_anim, type = "cairo", nframes = 132, width = 668, height = 488, 
         renderer = gifski_renderer()) 
 
-anim_save("despesas_bar3.gif", animation = last_animation())
+anim_save("despesas_bar4.gif", animation = last_animation())
+
 ```
 
