@@ -434,7 +434,7 @@ graf_desp_para_gif <- graf_linhas_desp +
   geom_segment(aes(xend = ultimo_periodo, yend = Valor_12m_ipca), linetype = 2) +
   geom_point(size = 3) +
   geom_text(aes(x = ultimo_periodo + 50,
-                label = paste(round(Valor_12m_ipca, 0), classificador),
+                label = paste(round(Valor_12m_ipca, 0), enc2native(classificador)),
                 y = ifelse(Periodo < ultimo_periodo,
                            Valor_12m_ipca,
                            Valor_12m_ipca + c(0, 19, 7, -15, -32, 33, -12, 30))), 
@@ -474,8 +474,6 @@ anim_save("home_TT_despesas.gif", animation = last_animation())
 ## Gráfico de barras
 
 ```{r}
-
-
 
 # cria o rank
 
