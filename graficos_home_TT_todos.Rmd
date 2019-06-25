@@ -384,7 +384,7 @@ paleta_rgb <- col2rgb(paleta)
 #   else return(componente)
 # }
 
-fator <- 2
+fator <- 1.5
 paleta_darker <- NULL
 
 for (i in 1:dim(paleta_rgb)[2] ) {
@@ -393,6 +393,8 @@ for (i in 1:dim(paleta_rgb)[2] ) {
                          paleta_rgb[2,i] %/% fator,
                          paleta_rgb[3,i] %/% fator, maxColorValue = 255))
 }
+
+paleta_original <- c("#832F11", "#CA4017", "#F8AC08", "#CEC806", "#96C11E", "#028063", "#149339", "#4E857E", "#08869B", "#1E466A", "#6E287C")
 
 ```
 
@@ -413,8 +415,8 @@ graf_linhas_desp <- ggplot(desp_12m_ipca, aes(x = Periodo, y = Valor_12m_ipca, g
               #date_breaks = "1 years", 
                labels = anos,
                #date_labels = "%Y",
-               expand = expand_scale(mult = c(0, .60))) +
-  scale_color_manual(values = paleta) + 
+               expand = expand_scale(mult = c(0, .50))) +
+  scale_color_manual(values = paleta_darker) + 
   coord_cartesian(clip = 'off') +
   labs(
     y = NULL,
@@ -434,22 +436,25 @@ graf_desp_para_gif <- graf_linhas_desp +
   geom_segment(aes(xend = ultimo_periodo, yend = Valor_12m_ipca), linetype = 2) +
   geom_point(size = 3) +
   geom_text(aes(x = ultimo_periodo + 50,
-                label = paste(round(Valor_12m_ipca, 0), enc2native(classificador)),
+                label = paste(
+                  str_pad(round(Valor_12m_ipca, 0), width = 3, pad = " "),
+                  enc2native(classificador)),
                 y = ifelse(Periodo < ultimo_periodo,
                            Valor_12m_ipca,
-                           Valor_12m_ipca + c(0, 19, 7, -15, -32, 33, -12, 30))), 
+                           Valor_12m_ipca + c(0, 19, 7, -5, -32, 33, -12, 22))), 
             hjust = 0, family = "Open Sans Condensed",
-            size = 8) #não tinha definido
+            size = 7) #não tinha definido
 
+# para acertar os posicionamentos
 graf_linhas_desp + 
   geom_point(size = 3, aes(y = ifelse(Periodo == ultimo_periodo, Valor_12m_ipca, NA))) +
   geom_text(aes(x = ultimo_periodo + 50,
                 label = paste(round(Valor_12m_ipca, 0), classificador),
                 y = ifelse(Periodo < ultimo_periodo,
                            NA,
-                           Valor_12m_ipca + c(0, 15, 7, -15, -35, 30, -12, 30))), 
+                           Valor_12m_ipca + c(0, 19, 7, -5, -32, 33, -12, 22))), 
             hjust = 0, family = "Open Sans Condensed",
-            size = 8)
+            size = 7)
 
 # ordem do vetor de posicionamento: (alfabética)
 # RGPS, RPPS, Administrativo, Educação, Saúde, Social, Investimentos, Pessoal
