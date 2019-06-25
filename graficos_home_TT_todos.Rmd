@@ -335,26 +335,6 @@ desp_12m_ipca <- desp %>%
 
 ```
 
-
-
-Bixiga de enconding
-
-```{r}
-Encoding(dados_desp_plot$classificador) <- "UTF-8"
-
-dput(unique(dados_desp_plot$classificador))
-
-classificador_sem_acento <- c("Previdencia (RGPS)", "Custeio Administ.", "Custeio Educacao", 
-"Custeio Saude", "Custeio Social", "Investimentos", "Pessoal"
-)
-
-tab_class <- data.frame("classificador" = unique(dados_desp_plot$classificador), classificador_sem_acento)
-
-dados_desp_plot <- dados_desp_plot %>%
-  left_join(tab_class)
-
-```
-
 Plot
 
 Paleta TT
