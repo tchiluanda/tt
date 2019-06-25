@@ -522,7 +522,10 @@ desp_bar_estatico <- ggplot(desp_bar_cores,
                                           axis.ticks.x = element_blank(),
                                           axis.text.x  = element_blank(),
                                           axis.text.y  = element_blank(),
-                                          plot.margin = margin(1, 0.8, 0, 5.2, "cm")) #t, r, b, l
+                                          plot.subtitle = element_text(margin = margin(0, 0, 0.5, 0, "cm")),
+                                          plot.margin = margin(0, 0.8, 0, 5.2, "cm")) #t, r, b, l
+
+# inclui anotações
 
 desp_bar_estatico_anot <- desp_bar_estatico +
   geom_tile(aes(y = primeiro_valor),
@@ -533,11 +536,12 @@ desp_bar_estatico_anot <- desp_bar_estatico +
             check_overlap = TRUE,
             family = "Open Sans", size = 4.5, fontface = "italic")
 
+# animação
+
 desp_bar_anim <- desp_bar_estatico_anot + 
   transition_states(Periodo, transition_length = 1, state_length = 2) +
   theme(plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2)) +
-  labs(title = 'acumulado em 12 meses até {tolower(meses[ultimo_mes])} de',
-       subtitle = '{lubridate::year(closest_state)}') +
+  labs(subtitle = paste("Últimos 12 meses, atualizadas pelo IPCA, até {meses[lubridate::month(closest_state)]} de {lubridate::year(closest_state)}")) +
   ease_aes('sine-in-out')
 
 animate(desp_bar_anim, type = "cairo", nframes = 132, width = 668, height = 488, 
