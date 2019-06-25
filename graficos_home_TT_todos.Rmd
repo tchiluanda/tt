@@ -506,7 +506,7 @@ desp_bar_estatico <- ggplot(desp_bar_cores,
             position = position_dodge(1),
             size = 5.5, family = "Open Sans Condensed", vjust = 'center') +  
   geom_text(aes(y=0, label = paste(classificador, " ")), 
-            vjust = 0.2, hjust = 1, check_overlap = TRUE, family = "Open Sans Condensed Light", size = 5.5) +
+            vjust = 0.2, hjust = 1, check_overlap = TRUE, family = "Open Sans Condensed", size = 5.5) +
   coord_flip(clip = "off", expand = FALSE) +
   scale_y_continuous(labels = percent) + #, expand = expand_scale(add = c(0.2,0) 
   scale_x_reverse() +
@@ -531,7 +531,7 @@ desp_bar_estatico_anot <- desp_bar_estatico +
   geom_text(aes(label = ifelse(rank == 1, primeiro_ano, NA),
                 y = primeiro_valor, x = 0.4), 
             check_overlap = TRUE,
-            family = "Open Sans", size = 4, fontface = "italic")
+            family = "Open Sans", size = 4.5, fontface = "italic")
 
 desp_bar_anim <- desp_bar_estatico_anot + 
   transition_states(Periodo, transition_length = 1, state_length = 2) +
