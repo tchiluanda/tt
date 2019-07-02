@@ -444,7 +444,8 @@ graf_linhas_desp +
 
 ```{r}
 gif_linhas_desp <- graf_desp_para_gif +
-  transition_reveal(Periodo) 
+  transition_reveal(Periodo) +
+  labs(subtitle = paste("Últimos 12 meses, atualizados pelo IPCA, até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 # + theme(axis.text = element_text(size = 10, family = "Open Sans")) 
 # 
 animate(gif_linhas_desp, type = "cairo", nframes = nrow(ipca)/2, height = 488, width = 668,
@@ -452,10 +453,10 @@ animate(gif_linhas_desp, type = "cairo", nframes = nrow(ipca)/2, height = 488, w
 ```
 
 ```{r}
-anim_save("home_TT_despesas.gif", animation = last_animation())
+anim_save("home_TT_despesas_2.gif", animation = last_animation())
 ```
 
-## Gráfico de barras
+### Gráfico de barras
 
 ```{r}
 
