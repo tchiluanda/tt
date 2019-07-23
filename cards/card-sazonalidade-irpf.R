@@ -168,13 +168,13 @@ graf_anim2 <- graf2 + complemento_tema_gif() +
   labs(subtitle = 'Valores de {closest_state}, atualizados pelo IPCA') +
   transition_states(ano,
                     transition_length = 2,
-                    state_length = 1) +
+                    state_length = 3) +
   shadow_mark(alpha = .2, size = 1)
 
 graf_anim %>% animate(type = "cairo", nframes = 150)
-graf_anim2 %>% animate(type = "cairo", nframes = 210)
+graf_anim2 %>% animate(type = "cairo", nframes = 150)
 
-anim_save("sazonalidade_4.gif", animation = last_animation())
+anim_save("sazonalidade_5.gif", animation = last_animation())
 
 
 
