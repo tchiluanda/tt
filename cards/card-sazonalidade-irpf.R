@@ -41,6 +41,7 @@ MESES <- str_to_upper(meses)
 nomes_meses <- meses
 names(nomes_meses) <- 1:12
 
+setwd("~/GitHub/tt/cards")
 dados_originais <- read.csv2("rec_irpf_2019_04.csv")
 
 dados <- dados_originais %>%
@@ -184,10 +185,10 @@ sazo_barra <- ggplot(dados %>% arrange(desc(ano)),
                         fill = cor)) + #ano)) +
   geom_col(aes(y = valor), 
            alpha = 1,
-           width = 1,
+           width = .5,
            color = NA, position = 'identity') +
   coord_polar(start = -pi/12) +
-  scale_fill_viridis(option = "magma", 
+  scale_fill_viridis_d(option = "magma", 
                      direction = -1, 
                      breaks = c(max(dados$ano), min(dados$ano)),
                      guide = guide_colourbar(ticks = FALSE)) +

@@ -1,0 +1,86 @@
+Fluxo Base;Valor Contratado;;;;;;;
+Referência;31/12/2018;;;;;;;
+Posição em;27/05/2019;;;;;;;
+Valores Listados em;Reais;;;;;;;
+Tipo de Relatório;Analítico;;;;;;;
+Tipo Credor;Credor;Modalidade Contratação;Fase Contrato;Nome Contrato;Inscrição Siafi;Moeda Origem;Tir Contrato;Estoque pela Tir
+Agências Governamentais;;;;;;;;5.636.507.949,14
+;CREDIT;;;;;;;9.611.096,32
+;;Ag.Gov Pd;;;;;;9.611.096,32
+;;;Amortizando;PROT.FRANCES;1298;EUR;2,01%;9.611.096,32
+;EXIMBANK;;;;;;;0
+;;Ag. Gov 3;;;;;;0
+;;;Concluído;EXIMBANK7460;83;USD;2,01%;0
+;JBIC;;;;;;;63.357.558,73
+;;JBIC/JICA;;;;;;63.357.558,73
+;;;Amortizando;JBICBZ-P14;1515;JPY;2,46%;63.357.558,73
+;KFW;;;;;;;50.156.090,29
+;;Ag Gov Var;;;;;;47.956.151,54
+;;;Amortizando;KFW8990-0102;1384;USD;7,85%;47.956.151,54
+;;Ag.Gov Pd;;;;;;2.199.938,75
+;;;Amortizando;KFW(PI);1361;EUR;8,43%;2.199.938,75
+;SEK;;;;;;;5.513.383.203,79
+;;Ag Gov Var;;;;;;5.513.383.203,79
+;;;Desembolsando;SEK-FX2-SEK;11775;SEK;3,11%;5.345.766.253,04
+;;;Desembolsando;SEK-FX2-USD;11774;USD;4,59%;167.616.950,75
+Credores Privados;;;;;;;;5.090.337.341,45
+;BBVA;;;;;;;479.626.686,09
+;;CredPrivVa;;;;;;479.626.686,09
+;;;Amortizando;BBVA-P3/CLX;1527;USD;4,87%;479.626.686,09
+;BNP;;;;;;;2.114.665.007,06
+;;CredPrivVa;;;;;;2.114.665.007,06
+;;;Amortizando;BNP S/N-0102;1386;USD;7,73%;40.341.620,78
+;;;Desembolsando e Amortizando;PROSUB1BRNAV;1599;EUR;17,78%;2.074.323.386,27
+;RBC-Cayman;;;;;;;211.681,45
+;;CredPrivPd;;;;;;211.681,45
+;;;Amortizando;RBC-CAYMAN;501621;USD;5,53%;211.681,45
+;Societe Generale;;;;;;;2.495.833.966,85
+;;CredPrivVa;;;;;;2.495.833.966,85
+;;;Desembolsando e Amortizando;SOCGENPROJ-HX;1601;EUR;6,87%;2.495.833.966,85
+Organismos Multilaterais;;;;;;;;3.879.569.465,17
+;BID;;;;;;;1.152.285.116,11
+;;BIDLibUSD;;;;;;688.215.373,47
+;;;Amortizando;BID1811/OCBR;1543;USD;2,17%;6.073.114,92
+;;;Amortizando;BID1841/OCBR;501961;USD;2,65%;13.650.931,07
+;;;Amortizando;BID1864/OCBR;1564;USD;2,78%;11.371.664,49
+;;;Amortizando;BID2192/OCBR;1593;USD;3,19%;15.069.089,68
+;;;Amortizando;BID2229/OCBR;1588;USD;3,39%;9.768.281,49
+;;;Amortizando;BID2248/OCBR;1600;USD;2,78%;483.927.089,64
+;;;Desembolsando e Amortizando;BID2580/OCBR;1617;USD;3,43%;21.125.958,02
+;;;Amortizando;BID2791/OCBR;1604;USD;3,36%;14.693.533,06
+;;;Desembolsando;BID2919/OCBR;1631;USD;3,53%;27.051.820,35
+;;;Desembolsando;BID3142/OCBR;1637;USD;3,78%;23.894.191,80
+;;;Desembolsando;BID3391/OCBR;11771;USD;5,03%;52.158.429,15
+;;;Em negociação;BID4732/OCBR;12677;USD;0,00%;9.431.269,83
+;;BIDSCF US;;;;;;464.069.742,63
+;;;Amortizando;BID1194/OCBR-C;1372;USD;3,34%;276.662.674,77
+;;;Amortizando;BID1628/OCBR;1511;USD;3,05%;60.184.595,74
+;;;Amortizando;BID1718/OCBR;1538;USD;3,19%;127.222.472,12
+;BIRD;;;;;;;2.720.735.066,09
+;;BIRDVSL3;;;;;;289.171.508,41
+;;;Amortizando;BIRD7632-BR;1510;USD;2,49%;276.469.819,56
+;;;Amortizando;BIRD7782-BR;1563;USD;2,53%;12.701.688,84
+;;BIRDVSL4;;;;;;1.052.553.906,77
+;;;Desembolsando e Amortizando;BIRD7841-BR;1603;USD;2,70%;713.421.688,21
+;;;Amortizando;BIRD7901-BR;1589;USD;3,04%;126.202.648,17
+;;;Desembolsando e Amortizando;BIRD8074-BR;502030;USD;3,47%;72.438.081,28
+;;;Desembolsando;BIRD8095-BR;1621;USD;3,21%;135.608.719,64
+;;;Desembolsando;BIRDTF019211;1636;USD;0,25%;4.882.769,47
+;;FSL Tx Fix;;;;;;1.077.953.922,33
+;;;Amortizando;BIRD7299-BR;1476;USD;6,07%;762.927.339,30
+;;;Amortizando;BIRD7331-BR;1523;USD;4,49%;6.927.870,26
+;;;Amortizando;BIRD7338-BR;1549;USD;3,79%;1.476.942,65
+;;;Amortizando;BIRD7386-BR;1573;USD;4,95%;193.838.847,83
+;;;Amortizando;BIRD7428-BR;1541;USD;2,44%;7.737.270,50
+;;;Amortizando;BIRD7545-BR;1560;USD;4,45%;105.045.651,79
+;;FSL+Spread;;;;;;168.054.988,70
+;;;Desembolsando;BIRD8812-BR;12676;USD;4,74%;156.233.234,27
+;;;Desembolsando;BIRD8813-BR;12421;USD;5,00%;11.821.754,43
+;;FSL<07 USD;;;;;;48.295.099,42
+;;;Amortizando;BIRD7227-BR;1501;USD;1,35%;48.295.099,42
+;;FSL>07 USD;;;;;;84.705.640,47
+;;;Amortizando;BIRD7383-BR;1493;USD;0,92%;84.705.640,47
+;FIDA;;;;;;;6.549.282,97
+;;FIDA;;;;;;6.549.282,97
+;;;Desembolsando e Amortizando;FIDA436-SDR;1619;SDR;1,90%;1.388.073,00
+;;;Desembolsando e Amortizando;FIDA437;11770;EUR;0,91%;5.161.209,97

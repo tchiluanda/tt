@@ -1,0 +1,84 @@
+Fluxo Base;Valor Contratado;;;;;;;
+Referência;31/12/2017;;;;;;;
+Posição em;18/06/2019;;;;;;;
+Valores Listados em;Reais;;;;;;;
+Tipo de Relatório;Analítico;;;;;;;
+Tipo Credor;Credor;Modalidade Contratação;Fase Contrato;Nome Contrato;Inscrição Siafi;Moeda Origem;Tir Contrato;Estoque pela Tir
+Agências Governamentais;;;;;;;;4.051.907.139,49
+;CREDIT;;;;;;;12.482.541,36
+;;Ag.Gov Pd;;;;;;12.482.541,36
+;;;Amortizando;PROT.FRANCES;1298;EUR;2,25%;12.482.541,36
+;EXIMBANK;;;;;;;4.824.713,03
+;;Ag. Gov 3;;;;;;4.824.713,03
+;;;Concluído;EXIMBANK7460;83;USD;7,63%;4.824.713,03
+;JBIC;;;;;;;58.385.589,57
+;;JBIC/JICA;;;;;;58.385.589,57
+;;;Amortizando;JBICBZ-P14;1515;JPY;2,46%;58.385.589,57
+;KFW;;;;;;;78.861.376,07
+;;Ag Gov Var;;;;;;74.838.707,83
+;;;Amortizando;KFW8990-0102;1384;USD;5,78%;74.838.707,83
+;;Ag.Gov Pd;;;;;;4.022.668,24
+;;;Amortizando;KFW(PI);1361;EUR;5,15%;4.022.668,24
+;SEK;;;;;;;3.897.352.919,45
+;;Ag Gov Var;;;;;;3.897.352.919,45
+;;;Desembolsando;SEK-FX2-SEK;11775;SEK;3,11%;3.807.550.367,16
+;;;Desembolsando;SEK-FX2-USD;11774;USD;4,63%;89.802.552,30
+Credores Privados;;;;;;;;4.678.647.630,44
+;BBVA;;;;;;;566.173.246,50
+;;CredPrivVa;;;;;;566.173.246,50
+;;;Amortizando;BBVA-P3/CLX;1527;USD;4,87%;566.173.246,50
+;BNP;;;;;;;1.653.902.121,57
+;;CredPrivVa;;;;;;1.653.902.121,57
+;;;Amortizando;BNP S/N-0102;1386;USD;7,27%;63.569.658,83
+;;;Desembolsando e Amortizando;PROSUB1BRNAV;1599;EUR;19,95%;1.590.332.462,74
+;RBC-Cayman;;;;;;;177.317,41
+;;CredPrivPd;;;;;;177.317,41
+;;;Amortizando;RBC-CAYMAN;501621;USD;5,80%;177.317,41
+;Societe Generale;;;;;;;2.458.394.944,95
+;;CredPrivVa;;;;;;2.458.394.944,95
+;;;Desembolsando e Amortizando;SOCGENPROJ-HX;1601;EUR;6,44%;2.458.394.944,95
+Organismos Multilaterais;;;;;;;;3.528.061.965,34
+;BID;;;;;;;1.093.165.374,34
+;;BIDLibUSD;;;;;;581.726.041,14
+;;;Amortizando;BID1811/OCBR;1543;USD;2,14%;5.739.062,74
+;;;Amortizando;BID1841/OCBR;501961;USD;2,60%;12.641.423,14
+;;;Amortizando;BID1864/OCBR;1564;USD;2,73%;10.348.297,02
+;;;Amortizando;BID2192/OCBR;1593;USD;3,11%;13.746.594,10
+;;;Amortizando;BID2229/OCBR;1588;USD;3,32%;9.013.434,02
+;;;Amortizando;BID2248/OCBR;1600;USD;2,71%;449.241.821,18
+;;;Desembolsando e Amortizando;BID2580/OCBR;1617;USD;3,34%;19.322.500,93
+;;;Amortizando;BID2791/OCBR;1604;USD;3,26%;12.600.995,13
+;;;Totalmente Desembolsado;BID2919/OCBR;1631;USD;3,43%;21.109.059,41
+;;;Desembolsando;BID3142/OCBR;1637;USD;3,65%;20.273.149,82
+;;;Desembolsando;BID3391/OCBR;11771;USD;0,00%;7.689.703,66
+;;BIDSCF US;;;;;;511.439.333,20
+;;;Amortizando;BID1194/OCBR-C;1372;USD;3,39%;334.270.354,03
+;;;Amortizando;BID1628/OCBR;1511;USD;2,77%;57.243.303,28
+;;;Amortizando;BID1718/OCBR;1538;USD;2,87%;119.925.675,89
+;BIRD;;;;;;;2.427.206.723,68
+;;BIRDVSL3;;;;;;252.227.301,29
+;;;Amortizando;BIRD7632-BR;1510;USD;1,69%;241.182.886,62
+;;;Amortizando;BIRD7782-BR;1563;USD;1,85%;11.044.414,67
+;;BIRDVSL4;;;;;;860.038.587,70
+;;;Desembolsando e Amortizando;BIRD7841-BR;1603;USD;2,09%;608.730.621,80
+;;;Amortizando;BIRD7901-BR;1589;USD;1,83%;113.441.559,82
+;;;Amortizando;BIRD8074-BR;502030;USD;2,29%;52.615.345,79
+;;;Totalmente Desembolsado;BIRD8095-BR;1621;USD;2,26%;82.736.791,11
+;;;Desembolsando;BIRDTF019211;1636;USD;0,25%;2.514.269,18
+;;BIRVSL>98;;;;;;982.782,90
+;;;Concluído;BIRD4708-BR;1512;USD;2,10%;982.782,90
+;;FSL Tx Fix;;;;;;1.156.389.051,67
+;;;Amortizando;BIRD7299-BR;1476;USD;6,05%;838.204.513,12
+;;;Amortizando;BIRD7331-BR;1523;USD;4,49%;7.378.643,40
+;;;Amortizando;BIRD7338-BR;1549;USD;3,79%;1.573.237,75
+;;;Amortizando;BIRD7386-BR;1573;USD;4,95%;206.957.574,32
+;;;Amortizando;BIRD7428-BR;1541;USD;2,44%;7.929.756,81
+;;;Amortizando;BIRD7545-BR;1560;USD;4,45%;94.345.326,28
+;;FSL<07 USD;;;;;;68.964.921,69
+;;;Amortizando;BIRD7227-BR;1501;USD;2,04%;68.964.921,69
+;;FSL>07 USD;;;;;;88.604.078,43
+;;;Amortizando;BIRD7383-BR;1493;USD;1,04%;88.604.078,43
+;FIDA;;;;;;;7.689.867,31
+;;FIDA;;;;;;7.689.867,31
+;;;Desembolsando e Amortizando;FIDA436-SDR;1619;SDR;1,89%;1.848.821,79
+;;;Desembolsando e Amortizando;FIDA437;11770;EUR;0,93%;5.841.045,52
