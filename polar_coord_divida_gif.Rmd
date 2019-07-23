@@ -25,6 +25,7 @@ library(RColorBrewer)
 library(lubridate)
 library(gifski)
 library(animation)
+library(viridis)
 
 tema <- function(){
     theme_minimal() +
@@ -51,8 +52,8 @@ Importação do Ckan.
 
 ```{r importa, echo=FALSE}
 
-# recurso_TT <- resource_show(id="bf69babd-ac07-40ce-90ff-c8e07ec8c8bf",url="https://apickan.tesouro.gov.br/ckan")
-# download.file(recurso_TT$url, destfile = "./divida.xlsx", mode = 'wb' )
+recurso_TT <- resource_show(id="bf69babd-ac07-40ce-90ff-c8e07ec8c8bf",url="https://apickan.tesouro.gov.br/ckan")
+download.file(recurso_TT$url, destfile = "./divida.xlsx", mode = 'wb' )
 tabela <- read_excel("divida.xlsx", skip = 4)
 ```
 
@@ -98,6 +99,7 @@ plot1 <- ggplot(dados_plot_cor, aes(x = Mes, y = Valor, color = -Valor)) +
                                decimal.mark = ","),
                 y = Valor + 10000),
             size = 4, family = "Source Sans Pro") +
+  #scale_color_viridis(option = "plasma") +
   scale_colour_gradientn(colours = rev(brewer.pal(8, "YlOrRd")[2:8])) +
   coord_polar(theta = "x", start = 0, direction = 1) +
   scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
@@ -113,13 +115,18 @@ plot1 <- ggplot(dados_plot_cor, aes(x = Mes, y = Valor, color = -Valor)) +
   
 
 plot_din1 <- plot1 + 
-  labs(subtitle = "{frame_time}") +
+  labs(subtitle = "Resgates Mensais da Dívida Pública Federal em {frame_time}") +
   transition_time(Ano) +
+  #shadow_wake(wake_length = 1, alpha = .15, size = 1, exclude_layer = 2) +
+  #shadow_mark(alpha = .15, size = 2, color = "grey60", exclude_layer = 2) +
   ease_aes('linear')
 
 # plot_dinamico
 
-animate(plot_din1, nframes = 100, height = 480, width = 800)
+animate(plot_din1, nframes = 120, height = 480, width = 800, type = "cairo")
+
+anim_save("resgates_divida_bolinhas.gif", animation = last_animation())
+
 ```
 
 ```{r bars}
@@ -159,10 +166,10 @@ plot1 <- ggplot(dados_plot_cor, aes(x = Mes, y = Valor, fill = -Valor)) +
 
 plot_din <- plot1 + 
   labs(subtitle = "{closest_state}") +
-  transition_states(Ano, 1, 4, wrap = FALSE)
+  transition_states(Ano, 1, 3, wrap = FALSE)
 
 animation::ani.options(antialias = "cleartype")
-animate(plot_din + ease_aes('quadratic-in-out'), bg = 'transparent', height = 488, width = 688)
+animate(plot_din + ease_aes('sine-in-out'), bg = 'transparent', height = 488, width = 688, type = "cairo")
 
 anim_save("divida_quadratic.gif", animation = last_animation())
 
@@ -297,13 +304,14 @@ plot_eq_polar <- plot_equalizador + coord_polar(theta = "x", start = 0, directio
 ```{r}
 
 plot_din_frag <- plot_eq_polar + # + theme(panel.grid.major.x = element_blank())
-  labs(subtitle = "{closest_state}") +
-  transition_states(Ano, 1, 4, wrap = FALSE)
+  labs(subtitle = "Resgates da DPF em {closest_state}") +
+  transition_states(Ano, 1, 3, wrap = FALSE)
 
-animate(plot_din_frag + ease_aes('linear'), 
-        bg = 'transparent', height = 488, width = 688) #, 
+animate(plot_din_frag + ease_aes('linear'), nframes = 120,
+        #bg = 'transparent', 
+        height = 488, width = 688, type = 'cairo') #, 
         #renderer = gifski_renderer(loop = FALSE))
 
-# anim_save("divida_polar.gif", animation = last_animation())
+anim_save("divida_polar_f.gif", animation = last_animation())
 
 ```
