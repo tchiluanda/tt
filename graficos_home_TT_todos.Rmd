@@ -45,9 +45,9 @@ tema <- function(){
 ## Resultado primário
 
 ```{r importa, echo=FALSE}
-recurso_TT <- resource_show(id="527ccdb1-3059-42f3-bf23-b5e3ab4c6dc6",
-                             url="https://apickan.tesouro.gov.br/ckan")
-download.file(recurso_TT$url, destfile = "./rtn.xlsx", mode = 'wb' )
+# recurso_TT <- resource_show(id="527ccdb1-3059-42f3-bf23-b5e3ab4c6dc6",
+#                              url="https://apickan.tesouro.gov.br/ckan")
+# download.file(recurso_TT$url, destfile = "./rtn.xlsx", mode = 'wb' )
 tabela <- read_excel("rtn.xlsx", sheet = "1.1-A", skip = 4)
 ```
 
@@ -455,6 +455,51 @@ animate(gif_linhas_desp, type = "cairo", nframes = nrow(ipca)/2, height = 488, w
 ```{r}
 anim_save("home_TT_despesas_2.gif", animation = last_animation())
 ```
+
+#### Um slopegraph
+
+```{r, fig.height=7, fig.width=5}
+desp_extremos <- desp_12m_ipca %>% 
+  filter(
+    Periodo == first(Periodo) |
+    Periodo == last(Periodo)) %>%
+  select(Periodo, classificador, valor = Valor_12m_ipca) %>%
+  mutate(Periodo = ifelse(Periodo == first(Periodo), 1, 2)) %>%
+  spread(key = Periodo, value = valor) %>%
+  mutate(var = percent(`2`/`1` - 1)) %>%
+  gather(`2`, `1`, key = "Periodo", value = "valor")
+    
+save(desp_extremos, file = "desp_extremos.RData")
+load("desp_extremos.RData")
+
+slope <- ggplot(desp_extremos, aes(x = Periodo, 
+                          y = valor, 
+                          color = classificador,
+                          group = classificador)) +
+  geom_point(size = 3) +
+  geom_line(size = .5) +
+  geom_text(aes(label = ifelse(Periodo == 1,
+                               paste0(classificador, "  ", round(valor,0), " bi  "),
+                               paste0("  ", round(valor,0), " bi  (", var, ")")),
+                y = ifelse(Periodo == 1, valor,
+                           valor + c(0,0,.5,0,-10,0,-2.7,0))),
+            hjust = "outward", vjust = "center",
+            family = "Open Sans Condensed") +
+  labs(y = NULL, x = NULL) +
+  coord_cartesian(clip = "off", expand = FALSE) +
+  #scale_x_discrete(expand = expand_scale(add = c(0, 0))) +
+  scale_color_manual(values = paleta_darker) +
+  tema() + theme(axis.line = element_blank(),
+                 axis.text = element_blank(),
+                 axis.ticks = element_blank(),
+                 plot.margin =  margin(.5, 3, 0, 4.7, "cm"))
+
+ggsave(plot = slope, "slope.png", h = 7, w = 5, type = "cairo-png")
+
+# ordem do vetor de posicionamento: (alfabética)
+# RGPS, RPPS, Administrativo, Educação, Saúde, Social, Investimentos, Pessoal
+```
+
 
 ### Gráfico de barras
 
