@@ -109,7 +109,8 @@ plot1 <- ggplot(dados_plot_cor, aes(x = Mes, y = Valor, color = -Valor)) +
   ) +
   tema() +
   theme(panel.grid.major.y = element_blank(),
-        panel.grid.major.x = element_blank())
+        panel.grid.major.x = element_blank(),
+        legend.position = 'none')
     #+
   # theme(legend.position = 'none',
   #       panel.grid.major.y = element_line(color = "grey80", linetype = "dotted"),
