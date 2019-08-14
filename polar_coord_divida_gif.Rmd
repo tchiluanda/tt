@@ -101,23 +101,26 @@ plot1 <- ggplot(dados_plot_cor, aes(x = Mes, y = Valor, color = -Valor)) +
             size = 4, family = "Source Sans Pro") +
   #scale_color_viridis(option = "plasma") +
   scale_colour_gradientn(colours = rev(brewer.pal(8, "YlOrRd")[2:8])) +
-  coord_polar(theta = "x", start = 0, direction = 1) +
+  #coord_polar(theta = "x", start = 0, direction = 1) +
   scale_y_continuous(labels = function(x) {format(x/1000, big.mark = ".", decimal.mark = ",")}) +
   labs(
     y = "Bilhões de R$",
     x = NULL
   ) +
   tema() +
-  theme(legend.position = 'none',
-        panel.grid.major.y = element_line(color = "grey80", linetype = "dotted"),
-        panel.grid.major.x = element_line(color = "grey90", linetype = "solid"),
-        axis.title.y = element_text(hjust = 0.85))
+  theme(panel.grid.major.y = element_blank(),
+        panel.grid.major.x = element_blank())
+    #+
+  # theme(legend.position = 'none',
+  #       panel.grid.major.y = element_line(color = "grey80", linetype = "dotted"),
+  #       panel.grid.major.x = element_line(color = "grey90", linetype = "solid"),
+  #       axis.title.y = element_text(hjust = 0.85))
   
 
 plot_din1 <- plot1 + 
   labs(subtitle = "Resgates Mensais da Dívida Pública Federal em {frame_time}") +
   transition_time(Ano) +
-  #shadow_wake(wake_length = 1, alpha = .15, size = 1, exclude_layer = 2) +
+  shadow_wake(wake_length = .1) +#, alpha = .15, size = 1, exclude_layer = 2) +
   #shadow_mark(alpha = .15, size = 2, color = "grey60", exclude_layer = 2) +
   ease_aes('linear')
 
@@ -125,7 +128,7 @@ plot_din1 <- plot1 +
 
 animate(plot_din1, nframes = 120, height = 480, width = 800, type = "cairo")
 
-anim_save("resgates_divida_bolinhas.gif", animation = last_animation())
+anim_save("resgates_divida_bolinhas_linear.gif", animation = last_animation())
 
 ```
 
