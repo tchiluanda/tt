@@ -25,7 +25,7 @@ tema <- function(){
     theme_minimal() +
     theme(
       text = element_text(family = "Open Sans", colour = "grey20"),
-      axis.text = element_text(family = "Open Sans", colour = "grey20", size = 16),
+      axis.text = element_text(family = "Open Sans", colour = "grey20", size = 14),
       title = element_text(face = "bold"), # size para o Shiny
       plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 20, color = "#1E4C7A"),
       plot.caption = element_text(face = "italic"),
@@ -35,7 +35,7 @@ tema <- function(){
       legend.title = element_text(size = 18),
       axis.ticks = element_line(size = 0.5),
       axis.ticks.length = unit(.25, "cm"),
-      axis.title = element_text(size = 16),
+      axis.title = element_text(size = 14),
       legend.position = 'bottom')
   }
 
@@ -253,8 +253,8 @@ anim_save("home_TT_dpf_escala.gif", animation = last_animation())
 ## Despesas União
 
 ```{r tg_para_csv}
-dados_desp_RGPS <- read_excel("./dados/despesas2008_2018_apenasRGPS.xlsx", skip = 9)
-dados_desp_nRGPS <- read_excel("./dados/despesas2008_2018_excetoRGPS.xlsx", skip = 9)
+dados_desp_RGPS <- read_excel("./outros_dados/despesas2008_2018_apenasRGPS.xlsx", skip = 9)
+dados_desp_nRGPS <- read_excel("./outros_dados/despesas2008_2018_excetoRGPS.xlsx", skip = 9)
 
 dados_desp_nRGPS$RGPS <- FALSE
 dados_desp_RGPS$RGPS  <- TRUE
@@ -284,7 +284,7 @@ dados_desp <- dados_desp %>%
      !(Modalidade_cod %in% c("-7","-9")))
 
 dados_desp %>% 
-  write.csv2("./dados/despUniao.csv", row.names = FALSE)
+  write.csv2("./dados/despUniao__.csv", row.names = FALSE)
 
 
 ```
@@ -319,8 +319,8 @@ dados_desp_plot <- dados_desp %>%
   spread(classificador, Valor) %>%
   mutate_at(-1, funs(zoo::rollapply(., width = 12, FUN = sum, fill = NA, align = 'right'))) %>% 
   gather(-1, key = "classificador", value = "Valor_12m") %>%
-  left_join(ipca) %>%
-  mutate(Valor_12m_ipca = Valor_12m * IPCA / 1e9) %>%
+  #left_join(ipca) %>%
+  mutate(Valor_12m_ipca = Valor_12m / 1e9) %>%
   filter(!is.na(Valor_12m_ipca)) %>%
   filter(!classificador %in% c("Dívida", "Outras Transferências")) %>%
   arrange(Periodo)
@@ -374,22 +374,28 @@ anos <- lubridate::year(janeiros)
 ultimo_periodo <- max(dados_desp_plot$Periodo)
 # dados_desp_plot$posicoes_finais_rotulos <- c(rep(0, nrow(dados_desp_plot) - 7), c(0, 20, 0, -20, 20, 0, 0)) + dados_desp_plot$Valor_12m_ipca
 
+# se você reescreve aqui no RStudio os níveis, e transforma a variável classificador em fator, com esses níveis, o problema da acentuação / encoding desaparece :/
+
+niveis_classificador <- c("Benefícios RGPS", "Custeio Administrativo", "Custeio Educação", "Custeio Saúde", "Custeio Social", "Investimentos", "Pessoal")
+
+dados_desp_plot$classificador <- factor(dados_desp_plot$classificador, levels = niveis_classificador)
+
 graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca, group = classificador, color = classificador)) +
   geom_line(size = 1) +
   geom_segment(aes(xend = ultimo_periodo, yend = Valor_12m_ipca), linetype = 2) +
   geom_point(size = 3) +
   geom_text(aes(x = max(dados_desp_plot$Periodo) + 50,
-                label = paste(round(Valor_12m_ipca, 0), classificador_sem_acento),
+                label = paste(round(Valor_12m_ipca, 0), classificador),
                 y = ifelse(Periodo < ultimo_periodo,
                            Valor_12m_ipca,
                            Valor_12m_ipca + c(0, 20, 0, -24, 20, -7, 0))), 
             hjust = 0, family = "Open Sans",
-            size = 8) + #não tinha definido
+            size = 6) + #não tinha definido
   scale_x_date(breaks = janeiros,
               #date_breaks = "1 years", 
                labels = anos,
                #date_labels = "%Y",
-               expand = expand_scale(mult = c(0, .60))) +
+               expand = expand_scale(mult = c(.05, .60))) +
   scale_color_manual(values = paleta) + #brewer.pal(8, "Dark2")[-6]
   coord_cartesian(clip = 'off') +
   labs(
@@ -404,6 +410,10 @@ graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca,
                     axis.title.y = element_blank(),
                     plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2))
 
+
+  
+
+
 # aqui tinha um problema. com o expand tão grande, a escala continuava até sei lá quanto (2025, acho). para resolver isso tentei usar o `limits`. Não resolveu. aí resolvi setar mais ou menos manualmente, bom breaks e labels no lugar de date_breaks e date_labels. Mas eu tinha deixado o limits, então o geom_text não estava sendo escrito, pq ficou fora do limite.
 
 # outro problema: o vetor de posições não estava funcionando pq a tibble estava ordenada por classificador, e não por período.
@@ -411,14 +421,14 @@ graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca,
 
 ```{r}
 gif_linhas_desp <- graf_linhas_desp +
-  transition_reveal(classificador, Periodo) 
+  transition_reveal(Periodo) 
 # + theme(axis.text = element_text(size = 10, family = "Open Sans")) 
 # 
-animate(gif_linhas_desp, nframes = nrow(dpf)/2, height = 488, width = 668,
-        renderer = gifski_renderer(loop = FALSE))
+animate(gif_linhas_desp, nframes = 100, height = 488, width = 700,
+        renderer = gifski_renderer(loop = FALSE), type = "cairo")
 ```
 
 ```{r}
-anim_save("home_TT_despesas.gif", animation = last_animation())
+anim_save("home_TT_despesas_labels_nao_cagados.gif", animation = last_animation())
 ```
 
