@@ -1,6 +1,7 @@
 library(tidyverse)
+library(extrafont)
 
-
+loadfonts()
 
 # construindo uma base para a visualizacao --------------------------------
 
@@ -13,10 +14,10 @@ qde_fundos_com_sfbp <- 37
 qde_fundos_so_sf    <- qde_fundos_com_sf - qde_fundos_com_sfbp
 qde_fundos_so_bp    <- qde_fundos_com_bp - qde_fundos_com_sfbp
 
-lista_fundos <- c("Sem Financeiro" = qde_fundos_sem_fin, 
-                  "Apenas SF"      = qde_fundos_so_sf, 
-                  "SF e BP"        = qde_fundos_com_sfbp, 
-                  "Apenas BP"      = qde_fundos_so_bp)
+lista_fundos <- c("Sem recursos financeiros" = qde_fundos_sem_fin, 
+                  "Com superávit financeiro apenas"      = qde_fundos_so_sf, 
+                  "Com superávit financeiro e \nbalanço patrimonial"        = qde_fundos_com_sfbp, 
+                  "Com balanço patrimonial apenas"      = qde_fundos_so_bp)
 
 tipos_fundos <- names(lista_fundos)
 
@@ -84,8 +85,54 @@ fundos <- base_fundos %>%
   left_join(tabela_padding) %>%
   mutate(y = y + pos_inicial + Padding)
 
-ggplot(fundos, aes(x = x, y = y, fill = Tipo_fundo)) + 
+# calculo das posições médias, para plotar bolhas
+
+pos_medias <- fundos %>%
+  group_by(Tipo_fundo) %>%
+  summarise(y_med = (min(y)+max(y))/2,
+            valores_text = first(Valores),
+            valores = ifelse(valores_text == 0, NA, valores_text),
+            qde = n())
+
+
+
+grafico <- ggplot(fundos, aes(x = x, y = y, fill = Tipo_fundo)) + 
   geom_tile(color = "white", width = 0.75, height = 0.75) + 
-  scale_x_continuous(limits = c(NA, 20))
+  geom_point(data = pos_medias, aes(x = 18, y = y_med, size = valores, color = Tipo_fundo)) +
+  geom_text(data = pos_medias, 
+            aes(x = 18, y = y_med, 
+                label = paste0("R$ ", valores_text, " bi", 
+                               ifelse(Tipo_fundo == "Com balanço patrimonial apenas", "*", ""))),
+            hjust = "center", vjust = "center", size = 3.5, family = "Calibri Light",
+            color = "#111111") + 
+  geom_text(data = pos_medias, 
+            aes(x = 6, y = y_med, 
+                label = paste0(Tipo_fundo, "\n", qde, " fundos")),
+             hjust = "left", vjust = "center", size = 4, family = "Calibri Light",
+            color = "#555555") + 
+  scale_x_continuous(limits = c(NA, 20)) +
+  #scale_size(range = c(0, 20)) +
+  scale_size_area(max_size = 43) +
+  scale_y_reverse() +
+  scale_color_manual(values = c("Sem recursos financeiros"         = "#BBBBBB", 
+                                "Com superávit financeiro apenas"  = "#277E8E", 
+                                "Com superávit financeiro e \nbalanço patrimonial" = "#92B25A", 
+                                "Com balanço patrimonial apenas"      = "#FDE625")) +
+  scale_fill_manual(values = c("Sem recursos financeiros"         = "#BBBBBB", 
+                                "Com superávit financeiro apenas"  = "#277E8E", 
+                                "Com superávit financeiro e \nbalanço patrimonial" = "#92B25A", 
+                                "Com balanço patrimonial apenas"      = "#FDE625")) +  
+  labs(caption = "* Valor da disponibilidade líquida apurada no Balanço Patrimonial",
+       title = "Figura 2 — Recursos Financeiros") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        legend.position = "none",
+        text = element_text(family = "Calibri Light", 
+                            color = "#555555"),
+        plot.caption = element_text(color = "#333333", face = "italic"),
+        plot.title = element_text(family = "Calibri", face = "bold", hjust = "0.5"))
 
-
+ggsave(grafico, file = "plot.PNG", height = 8, width = 5, type = "cairo")
