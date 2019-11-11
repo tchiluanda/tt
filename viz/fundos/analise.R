@@ -97,6 +97,7 @@ pos_medias <- fundos %>%
 
 
 grafico <- ggplot(fundos, aes(x = x, y = y, fill = Tipo_fundo)) + 
+  #geom_point(aes(color = Tipo_fundo), size = 5) + 
   geom_tile(color = "white", width = 0.75, height = 0.75) + 
   geom_point(data = pos_medias, aes(x = 18, y = y_med, size = valores, color = Tipo_fundo)) +
   geom_text(data = pos_medias, 
