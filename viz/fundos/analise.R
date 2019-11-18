@@ -1,5 +1,6 @@
 library(tidyverse)
 library(extrafont)
+library(ggtext)
 
 loadfonts()
 
@@ -106,11 +107,10 @@ grafico <- ggplot(fundos, aes(x = x, y = y, fill = Tipo_fundo)) +
                                ifelse(Tipo_fundo == "Com balanço patrimonial apenas", "*", ""))),
             hjust = "center", vjust = "center", size = 3.5, family = "Calibri Light",
             color = "#111111") + 
-  geom_text(data = pos_medias, 
-            aes(x = 6, y = y_med, 
+  geom_text(data = pos_medias,
+            aes(x = 6, y = y_med, color = Tipo_fundo,
                 label = paste0(Tipo_fundo, "\n", qde, " fundos")),
-             hjust = "left", vjust = "center", size = 4, family = "Calibri Light",
-            color = "#555555") + 
+             hjust = "left", vjust = "center", size = 4, family = "Calibri Light") +
   scale_x_continuous(limits = c(NA, 20)) +
   #scale_size(range = c(0, 20)) +
   scale_size_area(max_size = 43) +
@@ -118,11 +118,11 @@ grafico <- ggplot(fundos, aes(x = x, y = y, fill = Tipo_fundo)) +
   scale_color_manual(values = c("Sem recursos financeiros"         = "#BBBBBB", 
                                 "Com superávit financeiro apenas"  = "#277E8E", 
                                 "Com superávit financeiro e \nbalanço patrimonial" = "#92B25A", 
-                                "Com balanço patrimonial apenas"      = "#FDE625")) +
+                                "Com balanço patrimonial apenas"      = "#BDAD1C")) +
   scale_fill_manual(values = c("Sem recursos financeiros"         = "#BBBBBB", 
                                 "Com superávit financeiro apenas"  = "#277E8E", 
                                 "Com superávit financeiro e \nbalanço patrimonial" = "#92B25A", 
-                                "Com balanço patrimonial apenas"      = "#FDE625")) +  
+                                "Com balanço patrimonial apenas"      = "#BDAD1C")) +  
   labs(caption = "* Valor da disponibilidade líquida apurada no Balanço Patrimonial",
        title = "Figura 2 — Recursos Financeiros") +
   theme_minimal() +
