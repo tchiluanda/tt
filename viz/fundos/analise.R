@@ -102,27 +102,31 @@ grafico <- ggplot(fundos, aes(x = x, y = y, fill = Tipo_fundo)) +
   geom_tile(color = "white", width = 0.75, height = 0.75) + 
   geom_point(data = pos_medias, aes(x = 18, y = y_med, size = valores, color = Tipo_fundo)) +
   geom_text(data = pos_medias, 
-            aes(x = 18, y = y_med, 
+            aes(x = 18, y = ifelse(Tipo_fundo == "Sem recursos financeiros", NA, y_med), 
                 label = paste0("R$ ", valores_text, " bi", 
                                ifelse(Tipo_fundo == "Com balanço patrimonial apenas", "*", ""))),
             hjust = "center", vjust = "center", size = 3.5, family = "Calibri Light",
-            color = "#111111") + 
+            color = "white") + 
   geom_text(data = pos_medias,
-            aes(x = 6, y = y_med, color = Tipo_fundo,
-                label = paste0(Tipo_fundo, "\n", qde, " fundos")),
-             hjust = "left", vjust = "center", size = 4, family = "Calibri Light") +
+            aes(x = 6, y = y_med-0.4, color = Tipo_fundo,
+                label = Tipo_fundo),
+             hjust = "left", vjust = "bottom", size = 4, family = "Calibri Light", fontface = "bold") +
+  geom_text(data = pos_medias,
+            aes(x = 6, y = y_med+0.4, color = Tipo_fundo,
+                label = paste0(qde, " fundos")),
+            hjust = "left", vjust = "top", size = 4, family = "Calibri Light") +
   scale_x_continuous(limits = c(NA, 20)) +
   #scale_size(range = c(0, 20)) +
   scale_size_area(max_size = 43) +
   scale_y_reverse() +
   scale_color_manual(values = c("Sem recursos financeiros"         = "#BBBBBB", 
                                 "Com superávit financeiro apenas"  = "#277E8E", 
-                                "Com superávit financeiro e \nbalanço patrimonial" = "#92B25A", 
-                                "Com balanço patrimonial apenas"      = "#BDAD1C")) +
+                                "Com superávit financeiro e \nbalanço patrimonial" = "#5E733B", 
+                                "Com balanço patrimonial apenas"      = "#7D7213")) +
   scale_fill_manual(values = c("Sem recursos financeiros"         = "#BBBBBB", 
                                 "Com superávit financeiro apenas"  = "#277E8E", 
-                                "Com superávit financeiro e \nbalanço patrimonial" = "#92B25A", 
-                                "Com balanço patrimonial apenas"      = "#BDAD1C")) +  
+                                "Com superávit financeiro e \nbalanço patrimonial" = "#5E733B", 
+                                "Com balanço patrimonial apenas"      = "#7D7213")) +  
   labs(caption = "* Valor da disponibilidade líquida apurada no Balanço Patrimonial",
        title = "Figura 2 — Recursos Financeiros") +
   theme_minimal() +
@@ -136,4 +140,4 @@ grafico <- ggplot(fundos, aes(x = x, y = y, fill = Tipo_fundo)) +
         plot.caption = element_text(color = "#333333", face = "italic"),
         plot.title = element_text(family = "Calibri", face = "bold", hjust = "0.5"))
 
-ggsave(grafico, file = "plot.PNG", height = 8, width = 5, type = "cairo")
+ggsave(grafico, file = "plot.PNG", height = 8, width = 5, dpi = 300, type = "cairo")
