@@ -6,25 +6,28 @@ loadfonts()
 
 # construindo uma base para a visualizacao --------------------------------
 
-qde_fundos_visados  <- 163
-qde_fundos_com_fin  <- 72
-qde_fundos_sem_fin  <- qde_fundos_visados - qde_fundos_com_fin
-qde_fundos_com_sf   <- 47
-qde_fundos_com_bp   <- 62
-qde_fundos_com_sfbp <- 37
-qde_fundos_so_sf    <- qde_fundos_com_sf - qde_fundos_com_sfbp
-qde_fundos_so_bp    <- qde_fundos_com_bp - qde_fundos_com_sfbp
+qde_fundos_visados      <- 163
+qde_fundos_com_fin      <- 54
+qde_fundos_sem_fin      <- 106
+qde_fundos_com_bp_nofss <- 3
+qde_fundos_com_sf       <- 47
+qde_fundos_com_bp       <- 47
+qde_fundos_com_sfbp     <- 37
 
-lista_fundos <- c("Sem recursos financeiros" = qde_fundos_sem_fin, 
-                  "Com superávit financeiro apenas"      = qde_fundos_so_sf, 
-                  "Com superávit financeiro e \nbalanço patrimonial"        = qde_fundos_com_sfbp, 
-                  "Com balanço patrimonial apenas"      = qde_fundos_so_bp)
+qde_fundos_so_sf        <- qde_fundos_com_sf - qde_fundos_com_sfbp
+qde_fundos_so_bp        <- qde_fundos_com_bp - qde_fundos_com_sfbp
+
+lista_fundos <- c("Com superávit financeiro apenas"      = qde_fundos_so_sf, 
+                  "Com superávit financeiro e balanço patrimonial"        = qde_fundos_com_sfbp, 
+                  "Com balanço patrimonial apenas"      = qde_fundos_so_bp,
+                  "Com balanço patrimonial, não pertencentes ao OFSS" = qde_fundos_com_bp_nofss,
+                  "Sem recursos financeiros" = qde_fundos_sem_fin)
 
 tipos_fundos <- names(lista_fundos)
 
 vlrs_fundos  <- data.frame(
   "Tipo_fundo" = tipos_fundos,
-  "Valores"    = c(0, 48.7, 175.4, 257.8-173)
+  "Valores"    = c(48.7, 175.4, 257.8-170.9, 0, 0)
 )
 
 cria_df <- function(item_fundos) {
@@ -42,29 +45,29 @@ cria_df <- function(item_fundos) {
 
 ## teste map
 
-  cria_df2 <- function(item_fundos, item_tipos) {
-    df <- data.frame(
-      "Sequencial_tipo" = 1:item_fundos,
-      "Tipo_fundo"      = rep(item_nomes, item_fundos)
-    )
-    return(df)
-  }
-  
-  lista_map <- map2(lista_fundos, tipos_fundos, cria_df2)
+  # cria_df2 <- function(item_fundos, item_tipos) {
+  #   df <- data.frame(
+  #     "Sequencial_tipo" = 1:item_fundos,
+  #     "Tipo_fundo"      = rep(item_nomes, item_fundos)
+  #   )
+  #   return(df)
+  # }
+  # 
+  # lista_map <- map2(lista_fundos, tipos_fundos, cria_df2)
 
 ## fim teste map
   
 
 lista <- list()
 
-for (i in 1:4) {
+for (i in 1:length((lista_fundos))) {
   lista[[i]] <- cria_df(lista_fundos[i])
 }
 
 base_fundos <- bind_rows(lista)
 
 largura_plot <- 4
-padding_entre_grupos <- 0.5
+padding_entre_grupos <- 0.75
 
 qde_linhas_por_grupo <- ((lista_fundos-1)%/%largura_plot) + 1
 
@@ -102,31 +105,38 @@ grafico <- ggplot(fundos, aes(x = x, y = y, fill = Tipo_fundo)) +
   geom_tile(color = "white", width = 0.75, height = 0.75) + 
   geom_point(data = pos_medias, aes(x = 18, y = y_med, size = valores, color = Tipo_fundo)) +
   geom_text(data = pos_medias, 
-            aes(x = 18, y = ifelse(Tipo_fundo == "Sem recursos financeiros", NA, y_med), 
+            aes(x = 18, 
+                y = ifelse(
+                  Tipo_fundo %in% c("Sem recursos financeiros",
+                                    "Com balanço patrimonial, não pertencentes ao OFSS"), 
+                  NA, 
+                  y_med), 
                 label = paste0("R$ ", valores_text, " bi", 
                                ifelse(Tipo_fundo == "Com balanço patrimonial apenas", "*", ""))),
-            hjust = "center", vjust = "center", size = 3.5, family = "Calibri Light",
+            hjust = "center", vjust = "center", size = 3.5, family = "Source Sans Pro",
             color = "white") + 
   geom_text(data = pos_medias,
-            aes(x = 6, y = y_med-0.4, color = Tipo_fundo,
+            aes(x = 6, y = y_med-0.3, color = Tipo_fundo,
                 label = Tipo_fundo),
-             hjust = "left", vjust = "bottom", size = 4, family = "Calibri Light", fontface = "bold") +
+             hjust = "left", vjust = "bottom", size = 4, family = "Source Sans Pro", fontface = "bold") +
   geom_text(data = pos_medias,
-            aes(x = 6, y = y_med+0.4, color = Tipo_fundo,
+            aes(x = 6, y = y_med+0.3, color = Tipo_fundo,
                 label = paste0(qde, " fundos")),
-            hjust = "left", vjust = "top", size = 4, family = "Calibri Light") +
+            hjust = "left", vjust = "top", size = 4, family = "Source Sans Pro") +
   scale_x_continuous(limits = c(NA, 20)) +
   #scale_size(range = c(0, 20)) +
   scale_size_area(max_size = 43) +
   scale_y_reverse() +
-  scale_color_manual(values = c("Sem recursos financeiros"         = "#BBBBBB", 
+  scale_color_manual(values = c("Sem recursos financeiros"         = "#ABABAB", 
                                 "Com superávit financeiro apenas"  = "#277E8E", 
-                                "Com superávit financeiro e \nbalanço patrimonial" = "#5E733B", 
-                                "Com balanço patrimonial apenas"      = "#7D7213")) +
-  scale_fill_manual(values = c("Sem recursos financeiros"         = "#BBBBBB", 
+                                "Com superávit financeiro e balanço patrimonial" = "#5E733B", 
+                                "Com balanço patrimonial apenas"      = "#7D7213",
+                                "Com balanço patrimonial, não pertencentes ao OFSS" = "#ACACAC")) +
+  scale_fill_manual(values = c("Sem recursos financeiros"         = "#ABABAB", 
                                 "Com superávit financeiro apenas"  = "#277E8E", 
-                                "Com superávit financeiro e \nbalanço patrimonial" = "#5E733B", 
-                                "Com balanço patrimonial apenas"      = "#7D7213")) +  
+                                "Com superávit financeiro e balanço patrimonial" = "#5E733B", 
+                                "Com balanço patrimonial apenas"      = "#7D7213",
+                               "Com balanço patrimonial, não pertencentes ao OFSS" = "#ACACAC")) +  
   labs(caption = "* Valor da disponibilidade líquida apurada no Balanço Patrimonial",
        title = "Figura 2 — Recursos Financeiros") +
   theme_minimal() +
@@ -135,9 +145,9 @@ grafico <- ggplot(fundos, aes(x = x, y = y, fill = Tipo_fundo)) +
         axis.text = element_blank(),
         axis.title = element_blank(),
         legend.position = "none",
-        text = element_text(family = "Calibri Light", 
+        text = element_text(family = "Source Sans Pro", 
                             color = "#555555"),
         plot.caption = element_text(color = "#333333", face = "italic"),
-        plot.title = element_text(family = "Calibri", face = "bold", hjust = "0.5"))
+        plot.title = element_text(family = "Source Sans Pro", face = "bold", hjust = "0.5"))
 
 ggsave(grafico, file = "plot.PNG", height = 8, width = 5, dpi = 300, type = "cairo")
