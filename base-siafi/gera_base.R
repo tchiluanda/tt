@@ -16,7 +16,7 @@ arquivos_apenas_RGPS <- list.files(path = "./base-siafi/dados", pattern = "*so R
 ## removendo temporariamente o exercício atual
 
 exercicio_atual <- as.character(year(Sys.Date()))
-exercicio_atual <- "2019"
+#exercicio_atual <- "2019"
 
 ### achando a posição do exercício atual na lista de arquivos exceto RGPS
 vetor_pos_exRGPS <- str_detect(arquivos_exceto_RGPS, exercicio_atual)
@@ -64,9 +64,13 @@ arq_fechado_apenas_RGPS  <- arquivos_apenas_RGPS[!vetor_pos_soRGPS]
 
 # abrindo a base fechada --------------------------------------------------
 
-# load("base_fechada.RData")
+# load("./base-siafi/base_fechada.RData")
 
 base_fechada <- read_rds("./base-siafi/base_fechada.rds")
+# # ajeita o nome da métrica que mudou de 2018 para 2019
+# # (não precisa mais fazer depois)
+# base_fechada <- base_fechada %>% rename(
+#   `Movim. Líquido - R$ (Item Informação)` = `Movimento R$ (Item Informação)`)
 
 
 # incorporando a base do ano ----------------------------------------------
@@ -99,9 +103,10 @@ base_atual   <- NULL
 
 # atualizando a base fechada --------------------------------------------
 
-# fiz isso agora quando 2019 fechou
-
-
+# # fiz isso agora quando 2019 fechou. 
+# 
+# base_fechada <- base_completa
+# saveRDS(base_fechada, file = "./base-siafi/base_fechada.rds")
 
 
 # limpeza e arrumação dos dados -------------------------------------------
@@ -132,7 +137,8 @@ colnames(base_completa) <- c("Esfera_cod",
 # verificação -- tem uma diferença em 2008, no exceto RGPS, no próprio TG.
 
 base_completa %>% 
-  #filter(Ano == "2019", as.numeric(Mes)<=4) %>% 
+  filter(Funcao_cod == "10") %>%
+         #Ano == "2019", as.numeric(Mes)<=4) %>% 
   group_by(Ano) %>% 
   summarise(total = as.character(sum(Valor))) 
   #%>% write.csv2(file = "verifica.csv")
@@ -152,7 +158,10 @@ dados <- base_completa %>%
 # dados %>% 
 #   write.csv2("despesas_uniao.csv", row.names = FALSE)
 
-save(dados, file = "despesa_uniao.RData")
+saveRDS(dados, file = "./base-siafi/despesa_uniao.rds")
 
 dados %>%
-  write_xlsx("despesa_uniao.xlsx")
+  write_xlsx("./base-siafi/despesa_uniao.xlsx")
+
+dados %>%
+  write.csv(file = "./base-siafi/despesa_uniao.csv", fileEncoding = "UTF-8")
