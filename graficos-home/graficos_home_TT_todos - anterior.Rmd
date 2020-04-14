@@ -1,0 +1,434 @@
+---
+title: "Resultado Primario"
+author: "tiago"
+date: "4 de dezembro de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries}
+library(tidyverse)
+library(readxl)
+library(scales)
+library(ggrepel)
+library(ipeaData)
+library(extrafont)
+library(gganimate)
+library(RColorBrewer)
+library(ckanr)
+library(zoo)
+
+tema <- function(){
+    theme_minimal() +
+    theme(
+      text = element_text(family = "Open Sans", colour = "grey20"),
+      axis.text = element_text(family = "Open Sans", colour = "grey20", size = 14),
+      title = element_text(face = "bold"), # size para o Shiny
+      plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 20, color = "#1E4C7A"),
+      plot.caption = element_text(face = "italic"),
+      panel.grid.major = element_blank(), 
+      panel.grid.minor = element_blank(),
+      legend.text = element_text(size = 18),
+      legend.title = element_text(size = 18),
+      axis.ticks = element_line(size = 0.5),
+      axis.ticks.length = unit(.25, "cm"),
+      axis.title = element_text(size = 14),
+      legend.position = 'bottom')
+  }
+
+```
+
+
+## Resultado primário
+
+```{r importa, echo=FALSE}
+# recurso_TT <- resource_show(id="527ccdb1-3059-42f3-bf23-b5e3ab4c6dc6",
+#                             url="https://apickan.tesouro.gov.br/ckan")
+# download.file(recurso_TT$url, destfile = "./rtn.xlsx", mode = 'wb' )
+tabela <- read_excel("rtn.xlsx", sheet = "1.1-A", skip = 4)
+```
+
+## Tratando os dados
+
+```{r}
+
+meses <- c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
+
+serie <- tabela %>% 
+  rename(rotulos = 1) %>%
+  filter(str_detect(rotulos, "VI. PRIMÁRIO GOVERNO") |
+           str_detect(rotulos, "Deflator - IPCA")) %>%
+  mutate(rotulos = c("Valor", "IPCA")) %>%
+  gather(-1, key = "Periodo", value = "Valores") %>%
+  spread(key = rotulos, value = Valores) %>%
+  mutate(Valor = as.numeric(Valor),
+         IPCA = as.numeric(IPCA),
+         Periodo = as.Date(as.numeric(Periodo), origin = "1899-12-30"),
+         Ano = lubridate::year(Periodo),
+         Mes = lubridate::month(Periodo),
+         Valor_12m = zoo::rollapply(Valor, width = 12, FUN = sum, fill = NA, align = 'right'),
+         Resultado = ifelse(Valor_12m > 0, "Positivo", "Negativo"),
+         Data = paste0(Ano, " - ", meses[Mes])) %>%
+  filter(!is.na(Valor_12m)) %>%
+  filter(Periodo >= "2006-01-01") # para ficar igual à série da dívida
+
+
+```
+
+Para poder fazer um gráfico de area, preciso segmentar o gráfico em grupo contíguos. Ou seja, agrupar as sequencias de negativos e positivos.
+
+```{r}
+palavra_chave <- "Grupo_"
+i <- 1
+ultimo_grupo <- paste0("Grupo_", i)
+grupo <- c(ultimo_grupo)
+
+vetor <- serie$Resultado
+
+for (j in 2:length(vetor)) {
+  if (vetor[j] != vetor[j-1]) {
+    i <- i+1
+    ultimo_grupo <- paste0("Grupo_", i)
+  }
+  grupo <- c(grupo, ultimo_grupo)
+}
+
+serie$Grupos <- grupo
+```
+
+Plotando
+
+```{r}
+vermelho <- brewer.pal(3, name = "Set1")[1]
+azul <- "#1f476a" # brewer.pal(3, name = "Set1")[2]
+verde <- brewer.pal(3, name = "Set1")[3]
+
+vermelho_claro <- "#ee7576"
+azul_claro     <- "#2c90bf" # "#87b1d4"
+
+grafico_linha <- ggplot(serie, aes(x = Periodo, y = Valor_12m, color = Resultado, fill = Resultado, group = 1)) +
+  geom_area(aes(group = Grupos)) +
+  geom_line(size = 1) + 
+  geom_point(size = 3, shape = 21, fill = "#f0f5f7") +
+  geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
+  scale_color_manual(values = c("Negativo" = vermelho, "Positivo" = azul)) +
+  scale_fill_manual(values = c("Negativo" = vermelho_claro, "Positivo" = azul_claro)) +  
+  scale_x_date(date_breaks = "1 years", 
+               date_labels = "%Y", 
+               limits = c(as.Date("2006-01-01"), NA), #"1997-12-01"
+               expand = expand_scale(mult = c(.04, .04))) +
+  coord_cartesian(clip = 'off') + 
+  labs(x = NULL, y = NULL) +
+  geom_text(aes(x = Periodo + 200,
+                label = format(round(Valor_12m/1000,0), 
+                                      big.mark = ".", 
+                                      decimal.mark = ",")),
+            size = 7, fontface = 'plain', family = "Open Sans SemiBold") +
+  tema() +   
+  theme(legend.position = 'none',
+        panel.grid.major.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2))
+
+```
+
+diminuir width!
+
+```{r}
+gif_linhas <- grafico_linha +
+  transition_reveal(1, Periodo) 
+#  labs(subtitle = "{frame_along}") 
+
+animate(gif_linhas, nframes = nrow(serie)/2, height = 488, width = 668,
+        renderer = gifski_renderer(loop = FALSE))
+
+
+anim_save("hom_TT_rtn.gif", animation = last_animation())
+
+```
+
+## Dados do estoque da dívida
+
+```{r}
+# recurso_dpf_TT <- resource_show(id="0402cb77-5e4c-4414-966f-0e87d802a29a",
+#                              url="https://apickan.tesouro.gov.br/ckan")
+# download.file(recurso_dpf_TT$url, destfile = "./dpf.xlsx", mode = 'wb' )
+tabela_div <- read_excel("dpf.xlsx", skip = 4)
+```
+
+```{r}
+meses_red <- c("Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez")
+which(meses_red == "Fev")
+
+#         Mes_nome = factor(Mes, levels = meses_red)
+
+dpf <- tabela_div %>%
+  rename(rotulos = 1) %>%
+  filter(str_detect(rotulos, "DPF EM PODER")) %>%
+  select(-1) %>%
+  gather(key = Mes_Ano, value = Valor) %>%
+  separate(Mes_Ano, into = c("Mes", "Ano"), sep = "/") %>%
+  filter(!is.na(Ano)) %>% # (3)
+  mutate(Ano = as.integer(paste0('20', Ano)), # (4)
+         Mes_num = match(Mes, meses_red),
+         Periodo = as.Date(paste0(Ano, "-",
+                                  if_else(Mes_num < 10, "0", ""), Mes_num, "-",
+                                  "01")))
+```
+
+Atualizando os valores pelo IPCA
+
+```{r}
+ipca <- serie %>% select(Periodo, IPCA)
+
+dpf <- dpf %>% 
+  left_join(ipca) %>%
+  mutate(Valor_ipca = Valor * IPCA)
+  
+
+```
+
+
+
+```{r}
+grafico_linha_dpf <- ggplot(dpf, aes(x = Periodo, y = Valor_ipca, color = TRUE, group = 1)) +
+  geom_area(fill = "#6cb2d2", color = NA) +
+  geom_line(size = 1) + 
+  #geom_hline(yintercept = 0, color = '#f0f5f7', size = 1) +
+  geom_point(size = 3, shape = 21, fill = "#f0f5f7") +
+  scale_color_manual(values = c("TRUE" = "#1E4C7A")) +
+  scale_x_date(date_breaks = "1 years", 
+               date_labels = "%Y", 
+               limits = c(as.Date("2006-01-01"), NA),
+               expand = expand_scale(mult = c(.04, .04))) +
+  coord_cartesian(ylim = c(min(dpf$Valor_ipca), max(dpf$Valor_ipca)),
+                  clip = "on") + # ponto e valor iniciais fixos a seguit
+  geom_point(size = 3, shape = 21, fill = "#f0f5f7",
+             x = dpf$Periodo[1], y = dpf$Valor_ipca[1]) +
+  geom_text(x = dpf$Periodo[1] - 100, y = dpf$Valor_ipca[1] + 50,
+            label = format(round(dpf$Valor_ipca[1]/1000, 2), 
+                                      big.mark = ".", 
+                                      decimal.mark = ","),
+            size = 7, fontface = 'plain', family = "Open Sans SemiBold") + # fim vlrs iniciais
+  labs(x = NULL, y = NULL) +
+  geom_text(aes(x = Periodo + 200,
+                label = format(round(Valor_ipca/1000, 2), 
+                                      big.mark = ".", 
+                                      decimal.mark = ",")),
+            size = 7, fontface = 'plain', family = "Open Sans SemiBold") +
+  tema() +   
+  theme(legend.position = 'none',
+        panel.grid.major.y = element_blank(),
+        panel.grid.major.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2))
+
+# observações: se vc setar o ylim(), a área deixa de aparecer. para mantê-la, é preciso setar o ylim como parâmetro do coord_cartesian(). Da documentação (https://ggplot2.tidyverse.org/reference/lims.html):
+
+# "For changing x or y axis limits without dropping data observations, see coord_cartesian()."
+```
+
+Animando
+
+```{r}
+gif_linhas_dpf <- grafico_linha_dpf +
+  transition_reveal(1, Periodo) 
+#  labs(subtitle = "{frame_along}") 
+
+animate(gif_linhas_dpf, nframes = nrow(dpf)/2, height = 488, width = 668,
+        renderer = gifski_renderer(loop = FALSE))
+
+
+anim_save("home_TT_dpf_escala.gif", animation = last_animation())
+```
+
+## Despesas União
+
+```{r tg_para_csv}
+dados_desp_RGPS <- read_excel("./outros_dados/despesas2008_2018_apenasRGPS.xlsx", skip = 9)
+dados_desp_nRGPS <- read_excel("./outros_dados/despesas2008_2018_excetoRGPS.xlsx", skip = 9)
+
+dados_desp_nRGPS$RGPS <- FALSE
+dados_desp_RGPS$RGPS  <- TRUE
+
+dados_desp <- rbind(dados_desp_nRGPS, dados_desp_RGPS)
+
+colnames(dados_desp) <- c("Funcao_cod",
+                          "Funcao_nome",
+                          "GND_cod",
+                          "GND_nome",
+                          "Modalidade_cod",
+                          "Modalidade_nome",
+                          "Periodo_Siafi",
+                          "Ano",
+                          "Mes_num",
+                          "Valor",
+                          "Previdencia")
+
+dados_desp <- dados_desp %>%
+  filter(!(Mes_num %in% c("13", "14"))) %>%
+  mutate(Periodo = as.Date(paste0(Ano, "-",
+                                  if_else(Mes_num < 10, "0", ""), Mes_num, "-",
+                                  "01")),
+         Valor = round(Valor, 2)) %>%
+  filter(!(Funcao_cod %in% c("-7","-9")) & 
+     !(GND_cod %in% c("-7","-9")) &
+     !(Modalidade_cod %in% c("-7","-9")))
+
+dados_desp %>% 
+  write.csv2("./dados/despUniao__.csv", row.names = FALSE)
+
+
+```
+
+Verifica totais
+
+```{r}
+dados_desp %>%
+  group_by(Ano) %>%
+  summarise(total = sum(Valor))
+```
+
+
+Tratamento dos dados
+
+```{r}
+
+dados_desp_plot <- dados_desp %>%
+  mutate(classificador = case_when(
+    Previdencia == TRUE ~ "Benefícios RGPS",
+    GND_cod == "1" ~ "Pessoal",
+    GND_cod %in% c("4", "5") ~ "Investimentos",
+    GND_cod %in% c("2", "6") ~ "Dívida",
+    GND_cod == "3" & Funcao_cod == "10" ~ "Custeio Saúde",
+    GND_cod == "3" & Funcao_cod == "12" ~ "Custeio Educação",
+    GND_cod == "3" & Funcao_cod %in% c("08", "11") ~ "Custeio Social",
+    GND_cod == "3" & as.numeric(Modalidade_cod) %in% 30:49 ~ "Outras Transferências",
+    GND_cod == "3" ~ "Custeio Administrativo")) %>%
+  group_by(Periodo, classificador) %>%
+  summarise(Valor = sum(Valor)) %>%
+  ungroup() %>%
+  spread(classificador, Valor) %>%
+  mutate_at(-1, funs(zoo::rollapply(., width = 12, FUN = sum, fill = NA, align = 'right'))) %>% 
+  gather(-1, key = "classificador", value = "Valor_12m") %>%
+  #left_join(ipca) %>%
+  mutate(Valor_12m_ipca = Valor_12m / 1e9) %>%
+  filter(!is.na(Valor_12m_ipca)) %>%
+  filter(!classificador %in% c("Dívida", "Outras Transferências")) %>%
+  arrange(Periodo)
+
+```
+
+Verifica total
+
+```{r}
+dados_desp_plot %>%
+  filter(Mes_num == "12") %>%
+  group_by(Ano) %>%
+  summarize(Valor = sum(Valor_12m))
+
+```
+
+Bixiga de enconding
+
+
+```{r}
+Encoding(dados_desp_plot$classificador) <- "UTF-8"
+
+dput(unique(dados_desp_plot$classificador))
+
+classificador_sem_acento <- c("Previdencia (RGPS)", "Custeio Administ.", "Custeio Educacao", 
+"Custeio Saude", "Custeio Social", "Investimentos", "Pessoal"
+)
+
+tab_class <- data.frame("classificador" = unique(dados_desp_plot$classificador), classificador_sem_acento)
+
+dados_desp_plot <- dados_desp_plot %>%
+  left_join(tab_class)
+
+```
+
+Plot
+
+Paleta TT
+
+```{r}
+cores_temas_TT <- c("#643275", "#e59405", "#03859a", "#1f476a", "#709a2d", "#ba3917")
+paleta <- c(cores_temas_TT, brewer.pal(8, "Dark2")[8])
+```
+
+
+
+```{r}
+
+janeiros <- unique(dados_desp_plot$Periodo[str_detect(dados_desp_plot$Periodo, "-01-01")])
+anos <- lubridate::year(janeiros)
+ultimo_periodo <- max(dados_desp_plot$Periodo)
+# dados_desp_plot$posicoes_finais_rotulos <- c(rep(0, nrow(dados_desp_plot) - 7), c(0, 20, 0, -20, 20, 0, 0)) + dados_desp_plot$Valor_12m_ipca
+
+# se você reescreve aqui no RStudio os níveis, e transforma a variável classificador em fator, com esses níveis, o problema da acentuação / encoding desaparece :/
+
+niveis_classificador <- c("Benefícios RGPS", "Custeio Administrativo", "Custeio Educação", "Custeio Saúde", "Custeio Social", "Investimentos", "Pessoal")
+
+dados_desp_plot$classificador <- factor(dados_desp_plot$classificador, levels = niveis_classificador)
+
+graf_linhas_desp <- ggplot(dados_desp_plot, aes(x = Periodo, y = Valor_12m_ipca, group = classificador, color = classificador)) +
+  geom_line(size = 1) +
+  geom_segment(aes(xend = ultimo_periodo, yend = Valor_12m_ipca), linetype = 2) +
+  geom_point(size = 3) +
+  geom_text(aes(x = max(dados_desp_plot$Periodo) + 50,
+                label = paste(round(Valor_12m_ipca, 0), classificador),
+                y = ifelse(Periodo < ultimo_periodo,
+                           Valor_12m_ipca,
+                           Valor_12m_ipca + c(0, 20, 0, -24, 20, -7, 0))), 
+            hjust = 0, family = "Open Sans",
+            size = 6) + #não tinha definido
+  scale_x_date(breaks = janeiros,
+              #date_breaks = "1 years", 
+               labels = anos,
+               #date_labels = "%Y",
+               expand = expand_scale(mult = c(.05, .60))) +
+  scale_color_manual(values = paleta) + #brewer.pal(8, "Dark2")[-6]
+  coord_cartesian(clip = 'off') +
+  labs(
+    y = NULL,
+    x = NULL
+  ) +
+  tema() + 
+  theme(legend.position = 'none') +
+  theme(axis.text = element_text(size = 16, family = "Open Sans"), # era 10
+                    axis.text.y = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    axis.title.y = element_blank(),
+                    plot.background = element_rect(color = "#f0f5f7", linetype = "solid", size = 2))
+
+
+  
+
+
+# aqui tinha um problema. com o expand tão grande, a escala continuava até sei lá quanto (2025, acho). para resolver isso tentei usar o `limits`. Não resolveu. aí resolvi setar mais ou menos manualmente, bom breaks e labels no lugar de date_breaks e date_labels. Mas eu tinha deixado o limits, então o geom_text não estava sendo escrito, pq ficou fora do limite.
+
+# outro problema: o vetor de posições não estava funcionando pq a tibble estava ordenada por classificador, e não por período.
+```
+
+```{r}
+gif_linhas_desp <- graf_linhas_desp +
+  transition_reveal(Periodo) 
+# + theme(axis.text = element_text(size = 10, family = "Open Sans")) 
+# 
+animate(gif_linhas_desp, nframes = 100, height = 488, width = 700,
+        renderer = gifski_renderer(loop = FALSE), type = "cairo")
+```
+
+```{r}
+anim_save("home_TT_despesas_labels_nao_cagados.gif", animation = last_animation())
+```
+

@@ -1,0 +1,112 @@
+---
+title: "Receitas IR"
+author: "tiago"
+date: "1 de novembro de 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Despesas Governo Federal 2008-2017
+
+```{r libraries}
+library(tidyverse)
+library(readxl)
+library(scales)
+library(ggrepel)
+library(ipeaData)
+library(extrafont)
+library(gganimate)
+library(RColorBrewer)
+library(lubridate)
+
+tema <- function(){
+    theme_minimal() +
+    theme(
+      text = element_text(family = "Source Sans Pro", colour = "grey20"),
+      axis.text = element_text(family = "Source Sans Pro", colour = "grey20", size = 12),
+      title = element_text(face = "bold"), # size para o Shiny
+      plot.subtitle = element_text(face = "bold", size = 18, color = "red"),
+      plot.caption = element_text(face = "italic"),
+      panel.grid.major = element_blank(), 
+      panel.grid.minor = element_blank(),
+      legend.text = element_text(size = 12),
+      legend.title = element_text(size = 12),
+      axis.ticks = element_line(size = 0.5),
+      axis.ticks.length = unit(.25, "cm"),
+      axis.title = element_text(size = 11),
+      legend.position = 'bottom')
+  }
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+data <- read_excel("Anexos-RTN-Setembro-2018.xlsx", sheet = "1.2-A", skip = 4)
+
+dados <-
+  data %>%
+  filter(`Discriminação` == "I.1.3.1  I.R. - Pessoa Física") %>%
+  gather(-1, key = "Data", value = "Valor") %>%
+  mutate(Data = as.Date(as.numeric(Data), origin = "1899-12-30"), # (1)
+         Ano = year(Data),
+         Mes = month(Data),
+         Valor = as.numeric(Valor))
+
+# (1) Quando o read_excel importa os dados, as colunas, que não estão no Excel definidas como "Data", mas tem o formato de Data, acabam sendo convertidas para os seus valores numéricos (aqueles valores sequenciais, em que "1" representa 01/01/1900. Por isso a necessidade desse workaround de conversão para o formato de Data no R, definindo a origem. Vi isso aqui: https://github.com/tidyverse/readxl/issues/134)
+```
+
+Visualizando
+
+```{r}
+polar_plot <- ggplot(dados, aes(x = Mes, y = Valor, color = -Ano)) +
+  geom_line(aes(group = Ano), size = 1) +
+  geom_point(color = "firebrick") +
+  # geom_text(aes(label = round(Valor,0), y = Valor + 1000), size = 4, family = "Source Sans Pro", color = "firebrick") +
+  geom_label(aes(label = str_sub(as.character(Data), 1, 7)), 
+             color = "dodgerblue",
+             fill = "white",
+             x = 12, y = , size = 5, family = "Source Sans Pro") +
+  coord_polar(theta = "x", start = 0, direction = 1) +
+  
+  scale_x_continuous(labels = c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"), breaks = 1:12) +
+  labs(
+    x = NULL,
+    y = NULL
+  ) + 
+  theme_minimal() +
+  theme(
+      text = element_text(family = "Source Sans Pro", colour = "grey20"),
+      axis.text = element_text(family = "Source Sans Pro", colour = "grey20", size = 12),
+      title = element_text(face = "bold"),
+      plot.subtitle = element_text(face = "bold", size = 18, color = "red"),
+      plot.caption = element_text(face = "italic"), 
+      panel.grid.minor = element_line(linetype = "dotted"),
+      legend.text = element_text(size = 12),
+      legend.title = element_text(size = 12),
+      axis.ticks.y = element_line(size = 0.5),
+      axis.ticks.length = unit(.15, "cm"),
+      axis.title = element_text(size = 11))
+
+
+polar_gif <- polar_plot +
+  transition_reveal(Ano, Data) 
+
+animation::ani.options(antialias = "cleartype")
+
+animate(polar_gif, nframes = 100, height = 600, width = 600)
+# animate(polar_gif, nframes = nrow(dados), height = 600, width = 600)
+
+```
+
+Salvar...
+
+```{r}
+anim_save("expenditure_Brazil.gif", animation = last_animation())
+```
+
