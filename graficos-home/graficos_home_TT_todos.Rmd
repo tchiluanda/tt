@@ -25,7 +25,7 @@ tema <- function(){
     theme_minimal() +
     theme(
       text = element_text(family = "Open Sans", colour = "grey20"),
-      axis.text = element_text(family = "Open Sans Condensed", colour = "grey20", size = 16),
+      axis.text = element_text(family = "Open Sans Condensed", colour = "grey20", size = 14),
       title = element_text(face = "bold"), # size para o Shiny
       plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 20, color = "#1E4C7A"),
       plot.caption = element_text(face = "italic"),
