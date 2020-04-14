@@ -9,13 +9,14 @@ library(tidyverse)
 
 # listando os arquivos ----------------------------------------------------
 
-arquivos_exceto_RGPS <- list.files(path = "./dados", pattern = "*ex RGPS Pgtos Totais Esf-Acao-Mod.xlsx", full.names = T)
+arquivos_exceto_RGPS <- list.files(path = "./base-siafi/dados", pattern = "*ex RGPS Pgtos Totais Esf-Acao-Mod.xlsx", full.names = T)
 
-arquivos_apenas_RGPS <- list.files(path = "./dados", pattern = "*so RGPS Pgtos Totais Esf-Acao-Mod.xlsx", full.names = T)
+arquivos_apenas_RGPS <- list.files(path = "./base-siafi/dados", pattern = "*so RGPS Pgtos Totais Esf-Acao-Mod.xlsx", full.names = T)
 
 ## removendo temporariamente o exercício atual
 
 exercicio_atual <- as.character(year(Sys.Date()))
+exercicio_atual <- "2019"
 
 ### achando a posição do exercício atual na lista de arquivos exceto RGPS
 vetor_pos_exRGPS <- str_detect(arquivos_exceto_RGPS, exercicio_atual)
@@ -54,12 +55,19 @@ arq_fechado_apenas_RGPS  <- arquivos_apenas_RGPS[!vetor_pos_soRGPS]
 # base_fechada_ex_RGPS <- NULL
 # 
 # save(base_fechada, file = "base_fechada.RData")
+# saveRDS(base_fechada, file = "./base-siafi/base_fechada.rds")
 # 
 # #=========================================================================#
 # # com sorte, não precisa mais fazer esse pedaço de cima.                  #
 # #=========================================================================#
 
-load("base_fechada.RData")
+
+# abrindo a base fechada --------------------------------------------------
+
+# load("base_fechada.RData")
+
+base_fechada <- read_rds("./base-siafi/base_fechada.rds")
+
 
 # incorporando a base do ano ----------------------------------------------
 
@@ -87,6 +95,13 @@ base_completa <- bind_rows(base_atual,
 # liberando recursos
 base_fechada <- NULL
 base_atual   <- NULL
+
+
+# atualizando a base fechada --------------------------------------------
+
+# fiz isso agora quando 2019 fechou
+
+
 
 
 # limpeza e arrumação dos dados -------------------------------------------
