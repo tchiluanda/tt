@@ -25,9 +25,9 @@ tema <- function(){
     theme_minimal() +
     theme(
       text = element_text(family = "Open Sans", colour = "grey20"),
-      axis.text = element_text(family = "Open Sans Condensed", colour = "grey20", size = 14),
+      axis.text = element_text(family = "Open Sans Condensed Light", face = "plain", colour = "grey20", size = 14),
       title = element_text(face = "bold"), # size para o Shiny
-      plot.subtitle = element_text(family = "Open Sans Condensed", face = "plain", size = 20, color = "#1E4C7A"),
+      plot.subtitle = element_text(family = "Open Sans Condensed Light", face = "plain", size = 20, color = "#1E4C7A"),
       plot.caption = element_text(face = "italic"),
       panel.grid.major = element_blank(), 
       panel.grid.minor = element_blank(),
@@ -262,7 +262,8 @@ Carga dos dados a partir do ckan
 # desp_uniao <- read_excel("desp_uniao.xlsx")
 # save(desp_uniao, file = "desp_uniao.RData")
 # 
-load("desp_uniao.RData")
+#load("desp_uniao.RData")
+desp_uniao <- readRDS(file = "../base-siafi/despesa_uniao.rds")
 ```
 
 ### Classificação dos dados
@@ -312,6 +313,7 @@ desp <- desp_uniao %>%
 #   ggplot(aes(x = Ano, y = Valor, color = classificador)) + 
 #   geom_line(aes(group = classificador))
 
+desp <- desp %>% filter(Periodo <= "2020-02-01")
       
 desp_12m_ipca <- desp %>%
   group_by(Periodo, classificador) %>%
@@ -420,9 +422,9 @@ graf_desp_para_gif <- graf_linhas_desp +
                   enc2native(classificador)),
                 y = ifelse(Periodo < ultimo_periodo,
                            Valor_12m_ipca,
-                           Valor_12m_ipca + c(0, 19, 7, -5, -32, 33, -12, 22))), 
+                           Valor_12m_ipca + c(0, 15, -2, -5, -17, 35, -39, 35))), 
             hjust = 0, family = "Open Sans Condensed",
-            size = 7) #não tinha definido
+            size = 6) #não tinha definido
 
 # para acertar os posicionamentos
 graf_linhas_desp + 
@@ -431,9 +433,9 @@ graf_linhas_desp +
                 label = paste(round(Valor_12m_ipca, 0), classificador),
                 y = ifelse(Periodo < ultimo_periodo,
                            NA,
-                           Valor_12m_ipca + c(0, 19, 7, -5, -32, 33, -12, 22))), 
+                           Valor_12m_ipca + c(0, 15, -2, -5, -17, 35, -39, 35))), 
             hjust = 0, family = "Open Sans Condensed",
-            size = 7)
+            size = 6)
 
 # ordem do vetor de posicionamento: (alfabética)
 # RGPS, RPPS, Administrativo, Educação, Saúde, Social, Investimentos, Pessoal
