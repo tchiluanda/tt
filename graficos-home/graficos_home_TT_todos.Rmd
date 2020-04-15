@@ -458,6 +458,74 @@ animate(gif_linhas_desp, type = "cairo", nframes = nrow(ipca)/2, height = 488, w
 anim_save("home_TT_despesas_2.gif", animation = last_animation())
 ```
 
+## Saúde x Gasto Primário
+
+Juntamos os dados.
+
+```{r}
+gasto_prim <- tabela %>% 
+  rename(rotulos = 1) %>%
+  filter(str_detect(rotulos, "IV. DESPESA TOTAL")) %>%
+  mutate(rotulos = "Valor") %>%
+  gather(-1, key = "Periodo", value = "Valores") %>%
+  spread(key = rotulos, value = Valores) %>%
+  mutate(Valor = as.numeric(Valor)/1000,
+         Periodo = as.Date(as.numeric(Periodo), origin = "1899-12-30"),
+         Ano = lubridate::year(Periodo),
+         Mes = lubridate::month(Periodo),
+         Valor_12m = zoo::rollapply(Valor, width = 12, FUN = sum, fill = NA, align = 'right'),
+         Data = paste0(Ano, " - ", meses[Mes])) %>%
+  filter(!is.na(Valor_12m)) %>%
+  filter(Periodo >= "2008-12-01") %>% # para ficar igual à série das despesas
+  select(Periodo, Gasto_primario = Valor_12m)
+
+gasto_saude <- desp_12m_ipca %>%
+  filter(classificador == "Custeio Saúde") %>%
+  select(Periodo, Gasto_saude = Valor_12m_ipca)
+
+gastos_prim_saude_wide <- gasto_prim %>% 
+  left_join(gasto_saude) 
+
+gastos_prim_saude <- gastos_prim_saude_wide %>%
+  gather(Gasto_primario, Gasto_saude, key = "tipo", value = "valor")
+
+gastos_saude_prim <- gastos_prim_saude_wide %>%
+  mutate(relacao = Gasto_saude/Gasto_primario)
+```
+
+Primeiro plot
+
+```{r}
+ggplot(gastos_prim_saude, aes(x = Periodo, color = tipo, y = valor)) +
+  geom_line() +
+  geom_text(aes(label = ifelse(Periodo == "2020-02-01", valor, NA))) +
+  tema() +
+  theme(legend.position = "none")
+
+ggplot(gastos_saude_prim, aes(x = Periodo, y = relacao)) +
+  geom_line(color = azul_claro, size = 1) +
+  geom_point(aes(y = ifelse(lubridate::month(Periodo) == 12, relacao, NA)),
+             color = azul) +
+  geom_text(aes(label = ifelse(lubridate::month(Periodo) == 12, percent(relacao, accuracy = .1), NA), y = relacao - 100),
+                  family = "Merriweather Sans", size = 2, color = azul,
+                  hjust = "center") +
+  scale_y_continuous(labels = scales::percent, limits = c(0, NA)) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  labs(x = NULL, y = NULL, title = "Despesas com saúde em relação ao gasto primário total", subtitle = "Valores acumulados em 12 meses, atualizados pelo IPCA", caption = "Fonte: RTN, Siafi") +
+  theme_minimal() +
+  theme(text = element_text(family = "Merriweather Sans"),
+        plot.title = element_text(family = "Merriweather", color = "#1e1e1e",
+                                  face = "bold", size = 12),
+        plot.subtitle = element_text(family = "Merriweather Light", color = "#1e1e1e", size = 8),
+        plot.caption = element_text(family = "Merriweather Light", color = "dimgray", size = 8, face = "italic"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        axis.line = element_line(color = "#1e1e1e", size = 1),
+        axis.ticks = element_line(size = 0.5))
+```
+
+
+
 #### Um slopegraph
 
 ```{r, fig.height=7, fig.width=5}
