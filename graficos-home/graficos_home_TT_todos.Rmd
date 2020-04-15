@@ -20,6 +20,7 @@ library(ckanr)
 library(zoo)
 library(transformr)
 library(viridis)
+library(lubridate)
 
 tema <- function(){
     theme_minimal() +
@@ -437,6 +438,7 @@ graf_linhas_desp +
             hjust = 0, family = "Open Sans Condensed",
             size = 6)
 
+ggsave(filename = "desp.png", plot = last_plot(), h = 5, w = 10, type = "cairo-png")
 # ordem do vetor de posicionamento: (alfabética)
 # RGPS, RPPS, Administrativo, Educação, Saúde, Social, Investimentos, Pessoal
 
@@ -497,36 +499,58 @@ Primeiro plot
 
 ```{r}
 ggplot(gastos_prim_saude, aes(x = Periodo, color = tipo, y = valor)) +
-  geom_line() +
-  geom_text(aes(label = ifelse(Periodo == "2020-02-01", valor, NA))) +
-  tema() +
-  theme(legend.position = "none")
-
-ggplot(gastos_saude_prim, aes(x = Periodo, y = relacao)) +
-  geom_line(color = azul_claro, size = 1) +
-  geom_point(aes(y = ifelse(lubridate::month(Periodo) == 12, relacao, NA)),
-             color = azul) +
-  geom_text(aes(label = ifelse(lubridate::month(Periodo) == 12, percent(relacao, accuracy = .1), NA), y = relacao - 100),
-                  family = "Merriweather Sans", size = 2, color = azul,
-                  hjust = "center") +
-  scale_y_continuous(labels = scales::percent, limits = c(0, NA)) +
-  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
-  labs(x = NULL, y = NULL, title = "Despesas com saúde em relação ao gasto primário total", subtitle = "Valores acumulados em 12 meses, atualizados pelo IPCA", caption = "Fonte: RTN, Siafi") +
+  geom_line(size = 1) +
+  geom_text(aes(label = ifelse(Periodo == "2020-02-01", format(round(valor,0), big.mark = ".", decimal.mark = ","), NA)), family = "Merriweather Sans", size = 3,
+            hjust = "outward") +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y", expand = expansion(mult = c(0,.1))) +
+  scale_y_continuous(labels = function(x){format(x, big.mark = ".", decimal.mark = ",")}) +
+  scale_color_manual(values = c("Gasto_primario" = "coral",
+                                "Gasto_saude" = azul_claro)) +
+  labs(x = NULL, y = NULL, title = "Despesas com <span style = 'color: #2c90bf;'>saúde</span> e <span style = 'color: coral;'>gasto primário total</span>", subtitle = "Valores (em R$ mi) acumulados em 12 meses, atualizados pelo IPCA", caption = "Fonte: RTN, para o gasto primário; Siafi e deflator do RTN, para as despesas com saúde") +
   theme_minimal() +
   theme(text = element_text(family = "Merriweather Sans"),
-        plot.title = element_text(family = "Merriweather", color = "#1e1e1e",
+        plot.title = element_markdown(family = "Merriweather", color = "#1e1e1e",
                                   face = "bold", size = 12),
         plot.subtitle = element_text(family = "Merriweather Light", color = "#1e1e1e", size = 8),
         plot.caption = element_text(family = "Merriweather Light", color = "dimgray", size = 8, face = "italic"),
         panel.grid.minor = element_blank(),
         panel.grid.major = element_blank(),
-        axis.line = element_line(color = "#1e1e1e", size = 1),
+        axis.line = element_line(color = "dimgrey", size = .5),
+        axis.ticks = element_line(size = 0.5),
+        legend.position = "none")
+
+```
+
+```{r}
+ggplot(gastos_saude_prim, aes(x = Periodo, y = relacao)) +
+  geom_line(color = azul_claro, size = 1) +
+  geom_point(aes(y = ifelse(lubridate::month(Periodo) == 12, relacao, NA)),
+             color = azul) +
+  geom_text(aes(label = ifelse(lubridate::month(Periodo) == 12, percent(relacao, accuracy = .1, decimal.mark = ","), NA), 
+                y = relacao + ifelse(lubridate::year(Periodo) %in% c(2009,2010,2013,2014,2015),
+                           -.004, +.004)),
+                  family = "Merriweather Sans", size = 3, color = azul,
+                  hjust = "center") +
+  scale_y_continuous(labels = function(x){scales::percent(x, decimal.mark = ",")}, limits = c(0, NA)) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  labs(x = NULL, y = NULL, title = "Despesas com <span style = 'color: #2c90bf;'>saúde</span> em relação ao gasto primário total", subtitle = "Valores acumulados em 12 meses, atualizados pelo IPCA", caption = "Fonte: RTN, para o gasto primário; Siafi e deflator do RTN, para as despesas com saúde") +
+  theme_minimal() +
+  theme(text = element_text(family = "Merriweather Sans"),
+        plot.title = element_markdown(family = "Merriweather", color = "#1e1e1e",
+                                  face = "bold", size = 12),
+        plot.subtitle = element_text(family = "Merriweather Light", color = "#1e1e1e", size = 8),
+        plot.caption = element_text(family = "Merriweather Light", color = "dimgray", size = 8, face = "italic"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        axis.line = element_line(color = "dimgrey", size = .5),
         axis.ticks = element_line(size = 0.5))
+
+ggsave(filename = "saude.png", plot = last_plot(), h = 5, w = 7, type = "cairo-png")
 ```
 
 
 
-#### Um slopegraph
+### Um slopegraph
 
 ```{r, fig.height=7, fig.width=5}
 desp_extremos <- desp_12m_ipca %>% 
@@ -550,11 +574,20 @@ slope <- ggplot(desp_extremos, aes(x = Periodo,
   geom_line(size = .5) +
   geom_text(aes(label = ifelse(Periodo == 1,
                                paste0(classificador, "  ", round(valor,0), " bi  "),
-                               paste0("  ", round(valor,0), " bi  (", var, ")")),
+                               paste0("  ", round(valor,0), " bi  (", ifelse(var>0,"+",""), var, ")")),
                 y = ifelse(Periodo == 1, valor,
-                           valor + c(0,0,.5,0,-10,0,-2.7,0))),
+                           valor + c(0,0,.5,0,6,4,-2.7,0))),
             hjust = "outward", vjust = "center",
             family = "Open Sans Condensed") +
+  
+  annotate("text", x = 1, label = paste0(
+    meses_red[month(min(desp_12m_ipca$Periodo))], "/",
+    year(min(desp_12m_ipca$Periodo))), family = "Open Sans", size = 4, fontface = "bold", y = max(desp_extremos$valor) + 40, color = "dimgrey", hjust = "right") +
+  
+  annotate("text", x = 2, label = paste0(
+    meses_red[month(max(desp_12m_ipca$Periodo))], "/",
+    year(max(desp_12m_ipca$Periodo))), family = "Open Sans", size = 4, fontface = "bold", y = max(desp_extremos$valor) + 40, color = "dimgrey", hjust = "left") +
+  
   labs(y = NULL, x = NULL) +
   coord_cartesian(clip = "off", expand = FALSE) +
   #scale_x_discrete(expand = expand_scale(add = c(0, 0))) +
@@ -562,9 +595,13 @@ slope <- ggplot(desp_extremos, aes(x = Periodo,
   tema() + theme(axis.line = element_blank(),
                  axis.text = element_blank(),
                  axis.ticks = element_blank(),
-                 plot.margin =  margin(.5, 3, 0, 4.7, "cm"))
+                 plot.margin =  margin(.5, 3, 0, 4.7, "cm"),
+                 legend.position = "none")
 
-ggsave(plot = slope, "slope.png", h = 7, w = 5, type = "cairo-png")
+# ordem do vetor de posicionamento: (alfabética)
+# RGPS, RPPS, Administrativo, Educação, Saúde, Social, Investimentos, Pessoal
+
+ggsave(plot = slope, "slope.png", h = 8, w = 5, type = "cairo-png")
 
 # ordem do vetor de posicionamento: (alfabética)
 # RGPS, RPPS, Administrativo, Educação, Saúde, Social, Investimentos, Pessoal
