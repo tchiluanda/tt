@@ -248,7 +248,7 @@ animate(gif_linhas_dpf, type = "cairo", nframes = nrow(dpf)/2, height = 488, wid
         renderer = gifski_renderer(loop = FALSE))
 
 
-anim_save("home_TT_dpf_escala_com_cairo.gif", animation = last_animation())
+anim_save("home_TT_dpf.gif", animation = last_animation())
 ```
 
 ## Despesas União
