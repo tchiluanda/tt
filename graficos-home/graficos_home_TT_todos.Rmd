@@ -146,7 +146,7 @@ gif_linhas <- grafico_linha +
   transition_reveal(Periodo) +
   labs(subtitle = paste("Últimos 12 meses, atualizados pelo IPCA, até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 
-animate(gif_linhas, type = "cairo", nframes = nrow(serie)/2, height = 488, width = 668,
+animate(gif_linhas, type = "cairo", nframes = round(nrow(serie)/2), height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
 
 
@@ -244,7 +244,7 @@ gif_linhas_dpf <- grafico_linha_dpf +
   transition_reveal(Periodo) +
   labs(subtitle = paste("Estoque atualizado pelo IPCA até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 
-animate(gif_linhas_dpf, type = "cairo", nframes = nrow(dpf)/2, height = 488, width = 668,
+animate(gif_linhas_dpf, type = "cairo", nframes = round(nrow(dpf)/2), height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
 
 
@@ -423,7 +423,7 @@ graf_desp_para_gif <- graf_linhas_desp +
                   enc2native(classificador)),
                 y = ifelse(Periodo < ultimo_periodo,
                            Valor_12m_ipca,
-                           Valor_12m_ipca + c(0, 15, -2, -5, -17, 35, -39, 35))), 
+                           Valor_12m_ipca + c(0, 16, -17, -5, -2, 0, -39, 5))), 
             hjust = 0, family = "Open Sans Condensed",
             size = 6) #não tinha definido
 
@@ -434,7 +434,7 @@ graf_linhas_desp +
                 label = paste(round(Valor_12m_ipca, 0), classificador),
                 y = ifelse(Periodo < ultimo_periodo,
                            NA,
-                           Valor_12m_ipca + c(0, 15, -2, -5, -17, 35, -39, 35))), 
+                           Valor_12m_ipca + c(0, 16, -17, -5, -2, 0, -39, 5))), 
             hjust = 0, family = "Open Sans Condensed",
             size = 6)
 
@@ -452,12 +452,12 @@ gif_linhas_desp <- graf_desp_para_gif +
   labs(subtitle = paste("Últimos 12 meses, atualizados pelo IPCA, até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 # + theme(axis.text = element_text(size = 10, family = "Open Sans")) 
 # 
-animate(gif_linhas_desp, type = "cairo", nframes = nrow(ipca)/2, height = 488, width = 668,
+animate(gif_linhas_desp, type = "cairo", nframes = round(nrow(ipca)/2), height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
 ```
 
 ```{r}
-anim_save("home_TT_despesas_2.gif", animation = last_animation())
+anim_save("home_TT_despesas.gif", animation = last_animation())
 ```
 
 ## Saúde x Gasto Primário
