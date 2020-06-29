@@ -16,19 +16,18 @@ arquivos_apenas_RGPS <- list.files(path = "./base-siafi/dados", pattern = "*so R
 ## removendo temporariamente o exercício atual
 
 exercicio_atual <- as.character(year(Sys.Date()))
-#exercicio_atual <- "2019"
 
 ### achando a posição do exercício atual na lista de arquivos exceto RGPS
 vetor_pos_exRGPS <- str_detect(arquivos_exceto_RGPS, exercicio_atual)
 
 arq_atual_exceto_RGPS    <- arquivos_exceto_RGPS[ vetor_pos_exRGPS]
-arq_fechado_exceto_RGPS  <- arquivos_exceto_RGPS[!vetor_pos_exRGPS]
+#arq_fechado_exceto_RGPS  <- arquivos_exceto_RGPS[!vetor_pos_exRGPS]
 
 ### achando a posição do exercício atual na lista de arquivos apenas RGPS
 vetor_pos_soRGPS <- str_detect(arquivos_apenas_RGPS, exercicio_atual)
 
 arq_atual_apenas_RGPS    <- arquivos_apenas_RGPS[ vetor_pos_soRGPS]
-arq_fechado_apenas_RGPS  <- arquivos_apenas_RGPS[!vetor_pos_soRGPS]
+#arq_fechado_apenas_RGPS  <- arquivos_apenas_RGPS[!vetor_pos_soRGPS]
 
 
 # gerando as bases fechadas -----------------------------------------------
