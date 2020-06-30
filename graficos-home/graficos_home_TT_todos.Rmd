@@ -27,7 +27,7 @@ tema <- function(){
     theme(
       text = element_text(family = "Open Sans", colour = "grey20"),
       axis.text = element_text(family = "Open Sans Condensed Light", face = "plain", colour = "grey20", size = 14),
-      title = element_text(face = "bold"), # size para o Shiny
+      title = element_text(family = "Open Sans Condensed", face = "bold", size = 16), # size para o Shiny
       plot.subtitle = element_text(family = "Open Sans Condensed Light", face = "plain", size = 20, color = "#1E4C7A"),
       plot.caption = element_text(face = "italic"),
       panel.grid.major = element_blank(), 
@@ -144,13 +144,13 @@ diminuir width!
 ```{r}
 gif_linhas <- grafico_linha +
   transition_reveal(Periodo) +
-  labs(subtitle = paste("Últimos 12 meses, atualizados pelo IPCA, até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
+  labs(title = "Resultado do Tesouro Nacional", subtitle = paste("Últimos 12 meses, atualizados pelo IPCA, até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 
 animate(gif_linhas, type = "cairo", nframes = round(nrow(serie)/2), height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
 
 
-anim_save("hom_TT_rtn.gif", animation = last_animation())
+anim_save("hom_TT_rtn_tit.gif", animation = last_animation())
 
 ```
 
@@ -242,13 +242,13 @@ Animando
 ```{r}
 gif_linhas_dpf <- grafico_linha_dpf +
   transition_reveal(Periodo) +
-  labs(subtitle = paste("Estoque atualizado pelo IPCA até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
+  labs(title = "Dívida Pública Federal", subtitle = paste("Estoque atualizado pelo IPCA até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 
 animate(gif_linhas_dpf, type = "cairo", nframes = round(nrow(dpf)/2), height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
 
 
-anim_save("home_TT_dpf.gif", animation = last_animation())
+anim_save("hom_TT_dpf_tit.gif", animation = last_animation())
 ```
 
 ## Despesas União
