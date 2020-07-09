@@ -144,7 +144,7 @@ diminuir width!
 ```{r}
 gif_linhas <- grafico_linha +
   transition_reveal(Periodo) +
-  labs(title = "Resultado do Tesouro Nacional", subtitle = paste("Últimos 12 meses, atualizados pelo IPCA, até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
+  labs(title = "Resultado do Tesouro Nacional (R$ bi)", subtitle = paste("Últimos 12 meses, atualizados pelo IPCA, até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 
 animate(gif_linhas, type = "cairo", nframes = round(nrow(serie)/2), height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
@@ -242,7 +242,7 @@ Animando
 ```{r}
 gif_linhas_dpf <- grafico_linha_dpf +
   transition_reveal(Periodo) +
-  labs(title = "Dívida Pública Federal", subtitle = paste("Estoque atualizado pelo IPCA até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
+  labs(title = "Dívida Pública Federal (R$ tri)", subtitle = paste("Estoque atualizado pelo IPCA até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 
 animate(gif_linhas_dpf, type = "cairo", nframes = round(nrow(dpf)/2), height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
