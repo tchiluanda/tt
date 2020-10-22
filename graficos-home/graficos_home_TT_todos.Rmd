@@ -439,11 +439,11 @@ graf_linhas_desp +
                 label = paste(round(Valor_12m_ipca, 0), classificador),
                 y = ifelse(Periodo < ultimo_periodo,
                            NA,
-                           Valor_12m_ipca + c(0, 16, -17, 0, -2, 0, -39, 5))), 
+                           Valor_12m_ipca + c(0, 25, -40, 0, -21, 0, 0, 10))), 
             hjust = 0, family = "Roboto Condensed",
             size = 6)
 
-ggsave(filename = "desp.png", plot = last_plot(), h = 5, w = 10, type = "cairo-png")
+ggsave(filename = "desp.png", plot = last_plot(), h = 7, w = 10)
 # ordem do vetor de posicionamento: (alfabética)
 # RGPS, RPPS, Administrativo, Educação, Saúde, Social, Investimentos, Pessoal
 
@@ -465,6 +465,64 @@ animate(gif_linhas_desp, nframes = round(nrow(ipca)/2), height = 488, width = 66
 ```{r}
 anim_save("home_TT_despesas.gif", animation = last_animation())
 ```
+
+## Experimento com small multiples
+
+```{r}
+
+tab_class <- data.frame(
+  classificador2 = unique(desp_12m_ipca$classificador)
+)
+
+desp_12m_ipca_small <- desp_12m_ipca %>%
+  full_join(tab_class, by = character())
+
+
+graf_linhas_small <- ggplot(desp_12m_ipca_small, aes(x = Periodo, y = Valor_12m_ipca, group = classificador)) +
+  geom_line(size = 1, aes(color = classificador == classificador2,
+                          alpha = classificador == classificador2)) +
+  geom_point(aes(y = ifelse(Periodo == ultimo_periodo, Valor_12m_ipca, NA), 
+                 color = classificador == classificador2,
+                 size = classificador == classificador2)) +
+  geom_text(aes(x = ultimo_periodo + 140,
+                label = ifelse(classificador == classificador2, 
+                               paste(round(Valor_12m_ipca, 0), "bi"),
+                               NA),
+                y = ifelse(Periodo < ultimo_periodo,
+                           NA,
+                           Valor_12m_ipca),
+                color = classificador == classificador2), 
+            hjust = 0, family = "Roboto Condensed",
+            size = 2) +
+  scale_x_date(breaks = janeiros,
+              #date_breaks = "1 years", 
+               labels = anos,
+               #date_labels = "%Y",
+               expand = expand_scale(mult = c(0, .50))) +
+  scale_color_manual(values = c("TRUE" = "firebrick", "FALSE" = "#efefef")) + 
+  scale_alpha_manual(values = c("TRUE" = 1, "FALSE" = .3)) + 
+  scale_size_manual(values = c("TRUE" = 2, "FALSE" = NA)) + 
+  coord_cartesian(clip = 'off') +
+  labs(
+    y = NULL,
+    x = NULL
+  ) +
+  tema() + 
+  theme(legend.position = 'none') +
+  theme(
+    axis.text = element_text(size = 5, family = "Roboto"), # era 10
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(),
+    strip.text = element_text(hjust = 0, family = "Roboto"),
+          axis.ticks = element_line(size = 0.25),
+      axis.ticks.length = unit(.15, "cm")) +
+  facet_wrap(~classificador2)
+
+ggsave(plot = graf_linhas_small, filename = "small.png", h = 6, w = 10)
+```
+
+
 
 ## Saúde x Gasto Primário
 
