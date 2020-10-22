@@ -46,9 +46,9 @@ tema <- function(){
 ## Resultado primário
 
 ```{r importa, echo=FALSE}
-# recurso_TT <- resource_show(id="527ccdb1-3059-42f3-bf23-b5e3ab4c6dc6",
-#                              url="https://apickan.tesouro.gov.br/ckan")
-# download.file(recurso_TT$url, destfile = "rtn.xlsx", mode = 'wb' )
+recurso_TT <- resource_show(id="527ccdb1-3059-42f3-bf23-b5e3ab4c6dc6",
+                             url="http://www.tesourotransparente.gov.br/ckan")
+download.file(recurso_TT$url, destfile = "rtn.xlsx", mode = 'wb' )
 tabela <- read_excel("rtn.xlsx", sheet = "1.1-A", skip = 4)
 ```
 
@@ -144,13 +144,15 @@ diminuir width!
 ```{r}
 gif_linhas <- grafico_linha +
   transition_reveal(Periodo) +
-  labs(title = "Resultado do Tesouro Nacional (R$ bi)", subtitle = paste("Últimos 12 meses, atualizados pelo IPCA, até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
+  labs(
+    #title = "Resultado do Tesouro Nacional (R$ bi)", 
+    subtitle = paste("Últimos 12 meses, atualizados pelo IPCA, até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 
-animate(gif_linhas, type = "cairo", nframes = round(nrow(serie)/2), height = 488, width = 668,
-        renderer = gifski_renderer(loop = FALSE))
+animate(gif_linhas, nframes = round(nrow(serie)/2), height = 488, width = 668,
+        renderer = gifski_renderer(loop = FALSE)) #type = "cairo"
 
 
-anim_save("hom_TT_rtn_tit.gif", animation = last_animation())
+anim_save("hom_TT_rtn.gif", animation = last_animation())
 
 ```
 
@@ -158,7 +160,7 @@ anim_save("hom_TT_rtn_tit.gif", animation = last_animation())
 
 ```{r}
 recurso_dpf_TT <- resource_show(id="0402cb77-5e4c-4414-966f-0e87d802a29a",
-                              url="https://apickan.tesouro.gov.br/ckan")
+                              url="http://www.tesourotransparente.gov.br/ckan")
 download.file(recurso_dpf_TT$url, destfile = "./dpf.xlsx", mode = 'wb' )
 tabela_div <- read_excel("dpf.xlsx", skip = 4)
 ```
@@ -208,8 +210,9 @@ grafico_linha_dpf <- ggplot(dpf, aes(x = Periodo, y = Valor_ipca, color = TRUE, 
                date_labels = "%Y", 
                limits = c(as.Date("2006-01-01"), NA),
                expand = expand_scale(mult = c(.05, .04))) +
-  coord_cartesian(ylim = c(min(dpf$Valor_ipca), max(dpf$Valor_ipca)),
-                  clip = "on") + # ponto e valor iniciais fixos a seguit
+  coord_cartesian(
+    ylim = c(min(dpf$Valor_ipca), max(dpf$Valor_ipca)),
+    clip = "on") + # ponto e valor iniciais fixos a seguit
   geom_point(size = 3, shape = 21, fill = "#f0f5f7",
              x = dpf$Periodo[1], y = dpf$Valor_ipca[1]) +
   geom_text(x = dpf$Periodo[1] - 100, y = dpf$Valor_ipca[1] + 50,
@@ -242,13 +245,15 @@ Animando
 ```{r}
 gif_linhas_dpf <- grafico_linha_dpf +
   transition_reveal(Periodo) +
-  labs(title = "Dívida Pública Federal (R$ tri)", subtitle = paste("Estoque atualizado pelo IPCA até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
+  labs(
+    #title = "Dívida Pública Federal (R$ tri)", 
+    subtitle = paste("Estoque atualizado pelo IPCA até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 
-animate(gif_linhas_dpf, type = "cairo", nframes = round(nrow(dpf)/2), height = 488, width = 668,
+animate(gif_linhas_dpf, nframes = round(nrow(dpf)/2), height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
 
 
-anim_save("hom_TT_dpf_tit.gif", animation = last_animation())
+anim_save("hom_TT_dpf.gif", animation = last_animation())
 ```
 
 ## Despesas União
@@ -264,7 +269,7 @@ Carga dos dados a partir do ckan
 # save(desp_uniao, file = "desp_uniao.RData")
 # 
 #load("desp_uniao.RData")
-desp_uniao <- readRDS(file = "../base-siafi/despesa_uniao.rds")
+desp_uniao <- readRDS(file = "../base-siafi/dados/exportados/despesa_uniao.rds")
 ```
 
 ### Classificação dos dados
@@ -314,7 +319,7 @@ desp <- desp_uniao %>%
 #   ggplot(aes(x = Ano, y = Valor, color = classificador)) + 
 #   geom_line(aes(group = classificador))
 
-desp <- desp %>% filter(Periodo <= "2020-02-01")
+desp <- desp %>% filter(Periodo <= "2020-08-01")
       
 desp_12m_ipca <- desp %>%
   group_by(Periodo, classificador) %>%
@@ -423,8 +428,8 @@ graf_desp_para_gif <- graf_linhas_desp +
                   enc2native(classificador)),
                 y = ifelse(Periodo < ultimo_periodo,
                            Valor_12m_ipca,
-                           Valor_12m_ipca + c(0, 16, -17, -5, -2, 0, -39, 5))), 
-            hjust = 0, family = "Open Sans Condensed",
+                           Valor_12m_ipca + c(0, 25, -40, 0, -21, 0, 0, 10))), 
+            hjust = 0, family = "Roboto Condensed",
             size = 6) #não tinha definido
 
 # para acertar os posicionamentos
@@ -434,8 +439,8 @@ graf_linhas_desp +
                 label = paste(round(Valor_12m_ipca, 0), classificador),
                 y = ifelse(Periodo < ultimo_periodo,
                            NA,
-                           Valor_12m_ipca + c(0, 16, -17, -5, -2, 0, -39, 5))), 
-            hjust = 0, family = "Open Sans Condensed",
+                           Valor_12m_ipca + c(0, 16, -17, 0, -2, 0, -39, 5))), 
+            hjust = 0, family = "Roboto Condensed",
             size = 6)
 
 ggsave(filename = "desp.png", plot = last_plot(), h = 5, w = 10, type = "cairo-png")
@@ -452,8 +457,9 @@ gif_linhas_desp <- graf_desp_para_gif +
   labs(subtitle = paste("Últimos 12 meses, atualizados pelo IPCA, até {lubridate::year(frame_along)}/{meses[lubridate::month(frame_along)]}")) 
 # + theme(axis.text = element_text(size = 10, family = "Open Sans")) 
 # 
-animate(gif_linhas_desp, type = "cairo", nframes = round(nrow(ipca)/2), height = 488, width = 668,
+animate(gif_linhas_desp, nframes = round(nrow(ipca)/2), height = 488, width = 668,
         renderer = gifski_renderer(loop = FALSE))
+# adicionar type = "cairo" no windows
 ```
 
 ```{r}
