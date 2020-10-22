@@ -85,13 +85,13 @@ nova_base_atual <- bind_rows(
 # 5. exporta base, move arquivos de atualizacao ---------------------------
 
 nova_base_atual %>%
-  saveRDS(file = "./base-siafi/despesa_uniao.rds")
+  saveRDS(file = "./base-siafi/dados/exportados/despesa_uniao.rds")
 
 # nova_base_atual %>%
 #   write_xlsx("./base-siafi/despesa_uniao.xlsx")
 
 nova_base_atual %>%
-  write.csv(file = "./base-siafi/despesa_uniao.csv", 
+  write.csv(file = "./base-siafi/dados/exportados/despesa_uniao.csv", 
             fileEncoding = "UTF-8")
 
 file.copy(
