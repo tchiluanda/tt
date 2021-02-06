@@ -11,7 +11,7 @@ library(tidyverse)
 
 # 1. base atual -----------------------------------------------------------
 
-base_atual <- readRDS("./base-siafi/despesa_uniao.rds")
+base_atual <- readRDS("./base-siafi/dados/exportados/despesa_uniao.rds")
 
 # 2. dados mais recentes --------------------------------------------------
 
