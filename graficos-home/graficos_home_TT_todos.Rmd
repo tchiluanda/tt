@@ -211,7 +211,8 @@ grafico_linha_dpf <- ggplot(dpf, aes(x = Periodo, y = Valor_ipca, color = TRUE, 
                limits = c(as.Date("2006-01-01"), NA),
                expand = expand_scale(mult = c(.05, .04))) +
   coord_cartesian(
-    ylim = c(min(dpf$Valor_ipca), max(dpf$Valor_ipca)),
+    ylim = c(0,#min(dpf$Valor_ipca), 
+             max(dpf$Valor_ipca)),
     clip = "on") + # ponto e valor iniciais fixos a seguit
   geom_point(size = 3, shape = 21, fill = "#f0f5f7",
              x = dpf$Periodo[1], y = dpf$Valor_ipca[1]) +
@@ -319,7 +320,7 @@ desp <- desp_uniao %>%
 #   ggplot(aes(x = Ano, y = Valor, color = classificador)) + 
 #   geom_line(aes(group = classificador))
 
-desp <- desp %>% filter(Periodo <= "2020-08-01")
+#desp <- desp %>% filter(Periodo <= "2020-08-01")
       
 desp_12m_ipca <- desp %>%
   group_by(Periodo, classificador) %>%
@@ -428,7 +429,7 @@ graf_desp_para_gif <- graf_linhas_desp +
                   enc2native(classificador)),
                 y = ifelse(Periodo < ultimo_periodo,
                            Valor_12m_ipca,
-                           Valor_12m_ipca + c(0, 25, -40, 0, -21, 0, 0, 10))), 
+                           Valor_12m_ipca + c(0, 25, -8, 0, -21, 0, -11, 10))), 
             hjust = 0, family = "Roboto Condensed",
             size = 6) #não tinha definido
 
@@ -439,7 +440,7 @@ graf_linhas_desp +
                 label = paste(round(Valor_12m_ipca, 0), classificador),
                 y = ifelse(Periodo < ultimo_periodo,
                            NA,
-                           Valor_12m_ipca + c(0, 25, -40, 0, -21, 0, 0, 10))), 
+                           Valor_12m_ipca + c(0, 25, -8, 0, -21, 0, -11, 10))), 
             hjust = 0, family = "Roboto Condensed",
             size = 6)
 
