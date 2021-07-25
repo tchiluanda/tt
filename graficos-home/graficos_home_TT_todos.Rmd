@@ -60,7 +60,7 @@ meses <- c("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", 
 
 serie <- tabela %>% 
   rename(rotulos = 1) %>%
-  filter(str_detect(rotulos, "VI. PRIMÁRIO GOVERNO") |
+  filter(str_detect(rotulos, "5. RESULTADO PRIMÁRIO") |
            str_detect(rotulos, "Deflator - IPCA")) %>%
   mutate(rotulos = c("Valor", "IPCA")) %>%
   gather(-1, key = "Periodo", value = "Valores") %>%
