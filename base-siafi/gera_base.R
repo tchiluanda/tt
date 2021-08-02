@@ -8,7 +8,6 @@ library(stringr)
 library(lubridate)
 library(tidyverse)
 
-
 # 1. base atual -----------------------------------------------------------
 
 base_atual <- readRDS("./base-siafi/dados/exportados/despesa_uniao.rds")
