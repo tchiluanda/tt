@@ -81,6 +81,9 @@ nova_base_atual <- bind_rows(
   base_atualizacao_arrumada
 )
 
+# 4.5. Verifica totais ----------------------------------------------------
+
+totais <- nova_base_atual %>% group_by(Ano) %>% summarise(Valor = sum(Valor))
 
 # 5. exporta base, move arquivos de atualizacao ---------------------------
 
