@@ -429,8 +429,8 @@ graf_desp_para_gif <- graf_linhas_desp +
                   enc2native(classificador)),
                 y = ifelse(Periodo < ultimo_periodo,
                            Valor_12m_ipca,
-                           Valor_12m_ipca + c(0, 25, -8, 0, -21, 0, -11, 10))), 
-            hjust = 0, family = "Roboto Condensed",
+                           Valor_12m_ipca + c(0, 25, -8, 0, 0, 0, -11, 10))), 
+            hjust = 0, family = "Open Sans Condensed Light",
             size = 6) #não tinha definido
 
 # para acertar os posicionamentos
@@ -440,8 +440,8 @@ graf_linhas_desp +
                 label = paste(round(Valor_12m_ipca, 0), classificador),
                 y = ifelse(Periodo < ultimo_periodo,
                            NA,
-                           Valor_12m_ipca + c(0, 25, -8, 0, -21, 0, -11, 10))), 
-            hjust = 0, family = "Roboto Condensed",
+                           Valor_12m_ipca + c(0, 25, -8, 0, 0, 0, -11, 10))), 
+            hjust = 0, family = "Open Sans Condensed Light",
             size = 6)
 
 ggsave(filename = "desp.png", plot = last_plot(), h = 7, w = 10)
@@ -480,6 +480,7 @@ desp_12m_ipca_small <- desp_12m_ipca %>%
 
 
 graf_linhas_small <- ggplot(desp_12m_ipca_small, aes(x = Periodo, y = Valor_12m_ipca, group = classificador)) +
+  annotate(geom="rect", xmin = as.Date("2020-03-01"), xmax= as.Date(ultimo_periodo), ymin = -Inf, ymax = +Inf, fill = "lightcoral", alpha = .25) +
   geom_line(size = 1, aes(color = classificador == classificador2,
                           alpha = classificador == classificador2)) +
   geom_point(aes(y = ifelse(Periodo == ultimo_periodo, Valor_12m_ipca, NA), 
@@ -493,14 +494,14 @@ graf_linhas_small <- ggplot(desp_12m_ipca_small, aes(x = Periodo, y = Valor_12m_
                            NA,
                            Valor_12m_ipca),
                 color = classificador == classificador2), 
-            hjust = 0, family = "Roboto Condensed",
+            hjust = 0, family = "Fira Code",
             size = 2) +
   scale_x_date(breaks = janeiros,
               #date_breaks = "1 years", 
                labels = anos,
                #date_labels = "%Y",
                expand = expand_scale(mult = c(0, .50))) +
-  scale_color_manual(values = c("TRUE" = "firebrick", "FALSE" = "#efefef")) + 
+  scale_color_manual(values = c("TRUE" = "firebrick", "FALSE" = "#cecece")) + 
   scale_alpha_manual(values = c("TRUE" = 1, "FALSE" = .3)) + 
   scale_size_manual(values = c("TRUE" = 2, "FALSE" = NA)) + 
   coord_cartesian(clip = 'off') +
@@ -511,19 +512,17 @@ graf_linhas_small <- ggplot(desp_12m_ipca_small, aes(x = Periodo, y = Valor_12m_
   tema() + 
   theme(legend.position = 'none') +
   theme(
-    axis.text = element_text(size = 5, family = "Roboto"), # era 10
+    axis.text = element_text(size = 5, family = "Fira Code"), # era 10
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         axis.title.y = element_blank(),
-    strip.text = element_text(hjust = 0, family = "Roboto"),
+    strip.text = element_text(hjust = 0, family = "Fira Code"),
           axis.ticks = element_line(size = 0.25),
       axis.ticks.length = unit(.15, "cm")) +
   facet_wrap(~classificador2)
 
-ggsave(plot = graf_linhas_small, filename = "small.png", h = 6, w = 10)
+ggsave(plot = graf_linhas_small, filename = "small.png", h = 6, w = 12)
 ```
-
-
 
 ## Saúde x Gasto Primário
 
