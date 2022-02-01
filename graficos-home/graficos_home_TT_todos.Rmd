@@ -429,22 +429,25 @@ graf_desp_para_gif <- graf_linhas_desp +
                   enc2native(classificador)),
                 y = ifelse(Periodo < ultimo_periodo,
                            Valor_12m_ipca,
-                           Valor_12m_ipca + c(0, 25, -8, 0, 0, 0, -11, 10))), 
+                           Valor_12m_ipca + c(0, -8, -8, 0, 9, 15, 6, 0))), 
             hjust = 0, family = "Open Sans Condensed Light",
             size = 6) #não tinha definido
+# ordem do vetor de posicionamento: (alfabética)
+# RGPS, RPPS, Administrativo, Educação, Saúde, Social, Investimentos, Pessoal
+
 
 # para acertar os posicionamentos
-graf_linhas_desp + 
-  geom_point(size = 3, aes(y = ifelse(Periodo == ultimo_periodo, Valor_12m_ipca, NA))) +
-  geom_text(aes(x = ultimo_periodo + 50,
-                label = paste(round(Valor_12m_ipca, 0), classificador),
-                y = ifelse(Periodo < ultimo_periodo,
-                           NA,
-                           Valor_12m_ipca + c(0, 25, -8, 0, 0, 0, -11, 10))), 
-            hjust = 0, family = "Open Sans Condensed Light",
-            size = 6)
-
-ggsave(filename = "desp.png", plot = last_plot(), h = 7, w = 10)
+# graf_linhas_desp + 
+#   geom_point(size = 3, aes(y = ifelse(Periodo == ultimo_periodo, Valor_12m_ipca, NA))) +
+#   geom_text(aes(x = ultimo_periodo + 50,
+#                 label = paste(round(Valor_12m_ipca, 0), classificador),
+#                 y = ifelse(Periodo < ultimo_periodo,
+#                            NA,
+#                            Valor_12m_ipca + c(0, -8, -8, 0, 0, 0, 11, 10))), 
+#             hjust = 0, family = "Open Sans Condensed Light",
+#             size = 6)
+# 
+# ggsave(filename = "desp.png", plot = last_plot(), h = 7, w = 10)
 # ordem do vetor de posicionamento: (alfabética)
 # RGPS, RPPS, Administrativo, Educação, Saúde, Social, Investimentos, Pessoal
 
